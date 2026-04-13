@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
+import { mobileClerkAppearance } from "@/lib/mobile-clerk-appearance";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -69,7 +70,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         />
       </head>
       <body className="mobile-noise antialiased">
-        {clerkConfigured ? <ClerkProvider>{children}</ClerkProvider> : children}
+        {clerkConfigured ? <ClerkProvider appearance={mobileClerkAppearance}>{children}</ClerkProvider> : children}
         <script
           dangerouslySetInnerHTML={{
             __html: `if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('/sw.js'); }); }`,

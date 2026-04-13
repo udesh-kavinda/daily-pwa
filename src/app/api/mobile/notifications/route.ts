@@ -2,16 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getOrCreateAppUserByClerkId } from "@/lib/auth/get-or-create-app-user";
-
-type NotificationRow = {
-  id: string;
-  title: string | null;
-  message: string | null;
-  type: string | null;
-  is_read: boolean;
-  created_at: string;
-  data?: Record<string, unknown> | null;
-};
+import { loadMobileNotifications } from "@/lib/mobile-notifications";
 
 async function resolveAppUserId() {
   const { userId } = await auth();
@@ -28,39 +19,11 @@ export async function GET(req: NextRequest) {
     const resolved = await resolveAppUserId();
     if (resolved.error) return resolved.error;
 
-    const supabase = createAdminClient();
     const searchParams = new URL(req.url).searchParams;
     const limit = Number(searchParams.get("limit") || "40");
     const unreadOnly = searchParams.get("unreadOnly") === "true";
-
-    let query = supabase
-      .from("notifications")
-      .select("id, title, message, type, is_read, created_at, data")
-      .eq("user_id", resolved.appUserId)
-      .order("created_at", { ascending: false })
-      .limit(Math.max(1, Math.min(100, limit)));
-
-    if (unreadOnly) {
-      query = query.eq("is_read", false);
-    }
-
-    const { data, error } = await query;
-    if (error) throw new Error(error.message);
-
-    const notifications = ((data as NotificationRow[] | null) || []).map((entry) => ({
-      id: entry.id,
-      title: entry.title || "Notification",
-      message: entry.message || "",
-      type: entry.type || "system",
-      isRead: entry.is_read,
-      createdAt: entry.created_at,
-      data: entry.data || null,
-    }));
-
-    return NextResponse.json({
-      notifications,
-      unreadCount: notifications.filter((entry) => !entry.isRead).length,
-    });
+    const payload = await loadMobileNotifications(resolved.appUserId, { limit, unreadOnly });
+    return NextResponse.json(payload);
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Failed to load notifications";
     return NextResponse.json({ error: message }, { status: 500 });

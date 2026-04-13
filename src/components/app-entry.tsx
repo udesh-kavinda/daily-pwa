@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { SignIn } from "@clerk/nextjs";
+import { MobileAuthShell } from "@/components/mobile-auth-shell";
+import { mobileClerkAppearance } from "@/lib/mobile-clerk-appearance";
 
 export function AppEntry({ authenticated }: { authenticated: boolean }) {
   const router = useRouter();
@@ -54,47 +56,29 @@ export function AppEntry({ authenticated }: { authenticated: boolean }) {
   }
 
   return (
-    <main className="min-h-screen bg-[#081120] px-6 py-12 text-white">
-      <div className="mx-auto flex min-h-screen w-full max-w-md flex-col justify-center">
-        <div className="mb-8 text-center">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-[20px] bg-emerald-500 text-base font-bold text-slate-950">
-            D+
-          </div>
-          <h1 className="mt-5 text-[1.9rem] font-semibold leading-tight text-white">Welcome to Daily+ Mobile</h1>
-          <p className="mt-2 text-sm leading-relaxed text-slate-300">
-            Sign in to continue to your mobile workspace.
-          </p>
-        </div>
-
-        <div className="rounded-[28px] border border-white/10 bg-white/6 p-5 shadow-[0_24px_80px_rgba(0,0,0,0.28)] backdrop-blur">
-          <SignIn
-            routing="path"
-            path="/"
-            signUpUrl="/sign-up"
-            fallbackRedirectUrl="/dashboard"
-            appearance={{
-              elements: {
-                card: "shadow-none bg-transparent border-none",
-                rootBox: "w-full",
-                formButtonPrimary: "bg-emerald-400 text-slate-900 hover:bg-emerald-300",
-                footerActionLink: "text-emerald-300 hover:text-emerald-200",
-                formFieldLabel: "text-slate-200",
-                formFieldInput: "bg-white/8 border-white/10 text-white",
-                socialButtonsBlockButton: "bg-white/8 border-white/10 text-white hover:bg-white/12",
-                dividerText: "text-slate-400",
-                dividerLine: "bg-white/10",
-              },
-            }}
-          />
-        </div>
-
-        <div className="mt-5 text-center text-sm text-slate-300">
-          New here? {" "}
-          <Link href="/sign-up" className="font-semibold text-emerald-300 hover:text-emerald-200">
+    <MobileAuthShell
+      badge="Daily+ Mobile"
+      title="Welcome to Daily+ Mobile"
+      subtitle="Sign in to continue to your mobile workspace."
+      footer={
+        <>
+          New here?{" "}
+          <Link
+            href="/sign-up"
+            className="font-semibold text-[color:var(--accent-strong)] hover:text-[color:var(--accent)]"
+          >
             Create an account
           </Link>
-        </div>
-      </div>
-    </main>
+        </>
+      }
+    >
+      <SignIn
+        routing="path"
+        path="/"
+        signUpUrl="/sign-up"
+        fallbackRedirectUrl="/dashboard"
+        appearance={mobileClerkAppearance}
+      />
+    </MobileAuthShell>
   );
 }
