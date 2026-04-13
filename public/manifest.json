@@ -1,0 +1,41 @@
+{
+  "name": "Daily+ Mobile",
+  "short_name": "Daily+",
+  "description": "A premium mobile-first microloan workspace for collectors, creditors, and debtors powered by the Daily+ backend.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f4efe6",
+  "theme_color": "#f4efe6",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/maskable.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "categories": ["finance", "business", "productivity"],
+  "screenshots": [
+    {
+      "src": "/screenshots/dashboard.svg",
+      "sizes": "1280x720",
+      "type": "image/svg+xml",
+      "form_factor": "wide",
+      "label": "Daily+ Mobile dashboard"
+    },
+    {
+      "src": "/screenshots/mobile-dashboard.svg",
+      "sizes": "390x844",
+      "type": "image/svg+xml",
+      "form_factor": "narrow",
+      "label": "Daily+ Mobile phone view"
+    }
+  ]
+}

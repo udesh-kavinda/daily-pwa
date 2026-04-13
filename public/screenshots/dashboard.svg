@@ -1,0 +1,14 @@
+<svg width="1280" height="720" viewBox="0 0 1280 720" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1280" height="720" fill="#0f172a"/>
+  <rect x="64" y="64" width="1152" height="592" rx="24" fill="#111827" stroke="#1f2937"/>
+  <rect x="96" y="104" width="260" height="24" rx="12" fill="#10b981"/>
+  <rect x="96" y="156" width="500" height="18" rx="9" fill="#334155"/>
+  <rect x="96" y="210" width="320" height="18" rx="9" fill="#334155"/>
+  <rect x="96" y="270" width="1040" height="320" rx="18" fill="#0b1220" stroke="#1f2937"/>
+  <rect x="116" y="294" width="240" height="120" rx="16" fill="#0f1f2e"/>
+  <rect x="380" y="294" width="240" height="120" rx="16" fill="#0f1f2e"/>
+  <rect x="644" y="294" width="240" height="120" rx="16" fill="#0f1f2e"/>
+  <rect x="908" y="294" width="208" height="120" rx="16" fill="#0f1f2e"/>
+  <rect x="116" y="440" width="1000" height="130" rx="16" fill="#0f1f2e"/>
+  <text x="120" y="340" font-family="Sora, Arial, sans-serif" font-size="22" fill="#e2e8f0">Daily+ Dashboard</text>
+</svg>
