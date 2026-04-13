@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 import { ArrowLeft, Phone, Route, Users } from "lucide-react";
 import type { ReactNode } from "react";
 import { fetchJson } from "@/lib/fetch-json";
+import { DetailPageSkeleton } from "@/components/detail-page-skeleton";
 
 type CollectorDetailResponse = {
   collector: {
@@ -35,12 +36,14 @@ export default function CollectorDetailPage() {
   const params = useParams<{ id: string }>();
   const collectorId = params?.id;
   const [payload, setPayload] = useState<CollectorDetailResponse | null>(null);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let mounted = true;
     async function load() {
       if (!collectorId) return;
+      setLoading(true);
       try {
         const nextPayload = await fetchJson<CollectorDetailResponse>(`/api/mobile/collectors/${collectorId}`);
         if (!mounted) return;
@@ -50,6 +53,8 @@ export default function CollectorDetailPage() {
         if (!mounted) return;
         setPayload(null);
         setError(fetchError instanceof Error ? fetchError.message : "Failed to load collector");
+      } finally {
+        if (mounted) setLoading(false);
       }
     }
     void load();
@@ -57,6 +62,10 @@ export default function CollectorDetailPage() {
       mounted = false;
     };
   }, [collectorId]);
+
+  if (loading) {
+    return <DetailPageSkeleton title="Loading collector detail" subtitle="Preparing contact details, route coverage, and portfolio totals." metrics={3} rows={4} />;
+  }
 
   if (!payload?.collector || error) {
     return (

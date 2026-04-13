@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 import { ArrowLeft, ArrowRight, CalendarClock, CreditCard, Phone, WalletCards } from "lucide-react";
 import type { ReactNode } from "react";
 import { fetchJson } from "@/lib/fetch-json";
+import { DetailPageSkeleton } from "@/components/detail-page-skeleton";
 import { formatBorrowerStatus } from "@/lib/borrower-copy";
 
 type LoanDetailResponse = {
@@ -107,13 +108,7 @@ export default function LoanDetailPage() {
   const recentCollections = useMemo(() => (payload?.collections || []).slice(0, 5), [payload?.collections]);
 
   if (loading) {
-    return (
-      <div className="space-y-3 pb-4">
-        <section className="mobile-panel px-5 py-6 text-center">
-          <p className="mobile-text-secondary text-sm">Loading loan detail...</p>
-        </section>
-      </div>
-    );
+    return <DetailPageSkeleton title="Loading loan detail" subtitle="Preparing the loan summary, next collection, and repayment activity." metrics={4} rows={4} />;
   }
 
   if (!loan || error) {

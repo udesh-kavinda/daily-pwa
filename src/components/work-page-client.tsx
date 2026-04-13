@@ -322,12 +322,12 @@ export function WorkPageClient({
           </p>
           <div className="mt-4 grid grid-cols-2 gap-2.5">
             {routeRun?.nextStop ? (
-              <Link href={`/collector?loanId=${routeRun.nextStop.loanId}`} className="mobile-action-primary bg-white text-[#0f172a]">
+              <Link href={`/collector?loanId=${routeRun.nextStop.loanId}`} className="mobile-inline-action">
                 Open capture
                 <ArrowRight size={16} />
               </Link>
             ) : null}
-            <Link href="/collector" className="mobile-action-secondary border border-white/10 bg-white/8 text-white">
+            <Link href="/collector" className="mobile-inline-action-secondary">
               Capture workspace
             </Link>
           </div>
@@ -375,7 +375,7 @@ export function WorkPageClient({
                     <Link
                       key={`${route.id}-${stop.loanId}-${stop.collectionDate}`}
                       href={`/collector?loanId=${stop.loanId}`}
-                      className="block rounded-[14px] border border-slate-900/6 bg-slate-50 px-4 py-3.5 transition-colors hover:bg-white dark:border-white/8 dark:bg-slate-900/70 dark:hover:bg-slate-900"
+                      className="mobile-inline-surface block px-4 py-3.5 transition-colors hover:bg-[color:var(--card-strong)]"
                     >
                       <div className="flex items-start justify-between gap-4">
                         <div className="min-w-0">
@@ -430,7 +430,7 @@ export function WorkPageClient({
                 <Link
                   key={`attention-${item.loanId}`}
                   href={`/collector?loanId=${item.loanId}`}
-                  className="block rounded-[14px] border border-slate-900/6 bg-slate-50 px-4 py-3.5 dark:border-white/8 dark:bg-slate-900/70"
+                  className="mobile-inline-surface block px-4 py-3.5"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div>
@@ -535,7 +535,7 @@ export function WorkPageClient({
               key={filter.key}
               type="button"
               onClick={() => setSelectedFilter(filter.key)}
-              className={`shrink-0 rounded-full border px-3 py-2 text-sm font-semibold transition-all ${selectedFilter === filter.key ? "border-emerald-600 bg-emerald-600 text-white dark:border-emerald-400 dark:bg-emerald-500 dark:text-slate-950" : "border-slate-900/8 bg-white text-slate-700 dark:border-white/10 dark:bg-slate-900 dark:text-slate-200"}`}
+              className={`mobile-filter-pill shrink-0 ${selectedFilter === filter.key ? "mobile-filter-pill-active" : ""}`}
             >
               {filter.label} <span className="ml-1 opacity-70">{filter.count}</span>
             </button>
@@ -597,14 +597,14 @@ export function WorkPageClient({
                   <div className="border-t border-slate-900/6 px-4 py-4 dark:border-white/8">
                     <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
                       {item.metrics.map((metric) => (
-                        <div key={`${item.id}-${metric.label}`} className="rounded-[14px] bg-slate-50 px-3.5 py-3 dark:bg-slate-900/80">
+                        <div key={`${item.id}-${metric.label}`} className="mobile-inline-surface px-3.5 py-3">
                           <p className="mobile-text-tertiary text-[10px] uppercase tracking-[0.16em]">{metric.label}</p>
                           <p className="mobile-text-primary mt-1.5 text-sm font-semibold">{metric.value}</p>
                         </div>
                       ))}
                     </div>
 
-                    <div className="mt-3 rounded-[14px] bg-slate-50 px-3.5 py-3 dark:bg-slate-900/80">
+                    <div className="mobile-inline-surface mt-3 px-3.5 py-3">
                       <p className="mobile-text-primary inline-flex items-center gap-2 text-sm font-semibold"><MessageSquareQuote size={16} />Review note</p>
                       <p className="mobile-text-secondary mt-1.5 text-xs leading-relaxed">
                         Add context for approval, or explain clearly what must change before resubmission.
@@ -616,7 +616,7 @@ export function WorkPageClient({
                           setNote(event.target.value);
                         }}
                         rows={4}
-                        className="mobile-text-primary mt-3 w-full rounded-[12px] border border-slate-900/8 bg-white px-3 py-2.5 text-sm outline-none placeholder:text-slate-400 dark:border-white/10 dark:bg-slate-950 dark:placeholder:text-slate-500"
+                        className="mobile-text-primary mt-3 w-full rounded-[12px] border border-[color:var(--border)] bg-[color:var(--card-strong)] px-3 py-2.5 text-sm outline-none placeholder:text-[color:var(--text-tertiary)]"
                         placeholder={item.kind === "loan" ? "Add approval context or explain what needs to change." : "Explain any correction the collector should make before resubmitting."}
                       />
                     </div>
@@ -634,7 +634,7 @@ export function WorkPageClient({
                         type="button"
                         onClick={() => void handleDecision(item, "approve")}
                         disabled={acting}
-                        className="rounded-[14px] bg-emerald-600 px-4 py-3 text-sm font-semibold text-white disabled:opacity-45 dark:bg-emerald-500 dark:text-slate-950"
+                        className="mobile-inline-action disabled:opacity-45"
                       >
                         {acting && isCurrent ? <LoaderCircle size={16} className="mx-auto animate-spin" /> : "Approve"}
                       </button>

@@ -140,7 +140,7 @@ export function NotificationsPageClient({ initialPayload }: { initialPayload: Mo
               key={item.key}
               type="button"
               onClick={() => setFilter(item.key)}
-              className={`shrink-0 rounded-full border px-3 py-2 text-sm font-semibold transition-all ${filter === item.key ? "border-emerald-600 bg-emerald-600 text-white dark:border-emerald-400 dark:bg-emerald-500 dark:text-slate-950" : "border-slate-900/8 bg-white text-slate-700 dark:border-white/10 dark:bg-slate-900 dark:text-slate-200"}`}
+              className={`mobile-filter-pill shrink-0 ${filter === item.key ? "mobile-filter-pill-active" : ""}`}
             >
               {item.label} <span className="ml-1 opacity-70">{item.count}</span>
             </button>
@@ -152,7 +152,7 @@ export function NotificationsPageClient({ initialPayload }: { initialPayload: Mo
             type="button"
             onClick={() => void markAllRead()}
             disabled={acting || counts.unread === 0}
-            className="inline-flex items-center gap-2 rounded-[12px] bg-emerald-600 px-3.5 py-2.5 text-sm font-semibold text-white disabled:opacity-45 dark:bg-emerald-500 dark:text-slate-950"
+            className="mobile-inline-action disabled:opacity-45"
           >
             {acting ? <LoaderCircle size={15} className="animate-spin" /> : <CheckCheck size={15} />}
             Mark all read
@@ -161,7 +161,7 @@ export function NotificationsPageClient({ initialPayload }: { initialPayload: Mo
             type="button"
             onClick={() => void clearRead()}
             disabled={acting || counts.read === 0}
-            className="inline-flex items-center gap-2 rounded-[12px] border border-slate-900/8 bg-white px-3.5 py-2.5 text-sm font-semibold text-slate-700 disabled:opacity-45 dark:border-white/10 dark:bg-slate-900 dark:text-slate-200"
+            className="mobile-inline-action-secondary disabled:opacity-45"
           >
             <Trash2 size={15} />
             Clear read
@@ -187,7 +187,7 @@ export function NotificationsPageClient({ initialPayload }: { initialPayload: Mo
           filtered.map((item) => {
             const expanded = expandedId === item.id;
             return (
-              <section key={item.id} className={`mobile-panel overflow-hidden border ${expanded ? "border-emerald-500/30 dark:border-emerald-400/30" : item.isRead ? "" : "border-[#14213d]/18 dark:border-emerald-400/20"}`}>
+              <section key={item.id} className={`mobile-panel overflow-hidden border ${expanded ? "border-emerald-500/30 dark:border-emerald-400/30" : item.isRead ? "" : "border-[color:var(--accent-soft)]"}`}>
                 <button
                   type="button"
                   onClick={() => setExpandedId(expanded ? null : item.id)}
@@ -208,13 +208,17 @@ export function NotificationsPageClient({ initialPayload }: { initialPayload: Mo
                 </button>
 
                 {expanded ? (
-                  <div className="border-t border-slate-900/6 px-4 py-4 dark:border-white/8">
+                  <div className="border-t border-[color:var(--border)] px-4 py-4">
+                    <div className="mobile-inline-surface mb-3 px-3.5 py-3">
+                      <p className="mobile-text-primary text-sm font-semibold">Full message</p>
+                      <p className="mobile-text-secondary mt-1.5 text-[13px] leading-relaxed">{item.message}</p>
+                    </div>
                     <div className="flex gap-2.5">
                       <button
                         type="button"
                         onClick={() => void toggleRead(item)}
                         disabled={acting}
-                        className="inline-flex flex-1 items-center justify-center gap-2 rounded-[12px] border border-slate-900/8 bg-white px-3.5 py-2.5 text-sm font-semibold text-slate-700 disabled:opacity-45 dark:border-white/10 dark:bg-slate-900 dark:text-slate-200"
+                        className="mobile-inline-action-secondary flex-1 disabled:opacity-45"
                       >
                         {acting ? <LoaderCircle size={15} className="animate-spin" /> : <CheckCheck size={15} />}
                         {item.isRead ? "Mark unread" : "Mark read"}

@@ -3,9 +3,10 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { ArrowLeft, LoaderCircle, WalletCards } from "lucide-react";
+import { ArrowLeft, WalletCards } from "lucide-react";
 import { fetchJson } from "@/lib/fetch-json";
 import { formatBorrowerStatus } from "@/lib/borrower-copy";
+import { DetailPageSkeleton } from "@/components/detail-page-skeleton";
 
 type HistoryPayload = {
   loan?: {
@@ -90,14 +91,7 @@ export default function DebtorLoanHistoryPage() {
   }, [loanId]);
 
   if (loading) {
-    return (
-      <div className="space-y-4 pb-4">
-        <section className="mobile-panel px-5 py-6 text-center">
-          <LoaderCircle size={22} className="mx-auto animate-spin text-emerald-700" />
-          <p className="mt-3 text-sm text-stone-600">Loading repayment history...</p>
-        </section>
-      </div>
-    );
+    return <DetailPageSkeleton title="Loading repayment history" subtitle="Preparing repayment totals and the visit timeline for this loan." metrics={4} rows={5} />;
   }
 
   if (!payload?.loan || error) {

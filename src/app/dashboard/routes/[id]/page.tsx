@@ -7,6 +7,7 @@ import { ArrowLeft, FolderKanban, Route, Users } from "lucide-react";
 import type { ReactNode } from "react";
 import { fetchJson } from "@/lib/fetch-json";
 import { StatusPill } from "@/components/status-pill";
+import { DetailPageSkeleton } from "@/components/detail-page-skeleton";
 
 type RouteDetailResponse = {
   route: {
@@ -40,12 +41,14 @@ export default function RouteDetailPage() {
   const params = useParams<{ id: string }>();
   const routeId = params?.id;
   const [payload, setPayload] = useState<RouteDetailResponse | null>(null);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let mounted = true;
     async function load() {
       if (!routeId) return;
+      setLoading(true);
       try {
         const nextPayload = await fetchJson<RouteDetailResponse>(`/api/mobile/routes/${routeId}`);
         if (!mounted) return;
@@ -55,6 +58,8 @@ export default function RouteDetailPage() {
         if (!mounted) return;
         setPayload(null);
         setError(fetchError instanceof Error ? fetchError.message : "Failed to load route");
+      } finally {
+        if (mounted) setLoading(false);
       }
     }
     void load();
@@ -62,6 +67,10 @@ export default function RouteDetailPage() {
       mounted = false;
     };
   }, [routeId]);
+
+  if (loading) {
+    return <DetailPageSkeleton title="Loading route detail" subtitle="Preparing assigned collector, mapped debtors, and route totals." metrics={3} rows={4} />;
+  }
 
   if (!payload?.route || error) {
     return (

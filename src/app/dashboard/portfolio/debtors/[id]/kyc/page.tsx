@@ -13,6 +13,7 @@ import {
   UploadCloud,
 } from "lucide-react";
 import { fetchJson } from "@/lib/fetch-json";
+import { DetailPageSkeleton } from "@/components/detail-page-skeleton";
 
 type KycResponse = {
   debtor?: {
@@ -190,14 +191,7 @@ export default function DebtorKycPage() {
   };
 
   if (loading) {
-    return (
-      <div className="space-y-4 pb-4">
-        <section className="mobile-panel px-5 py-6 text-center">
-          <LoaderCircle size={22} className="mx-auto animate-spin text-emerald-700" />
-          <p className="mt-3 text-sm text-stone-600">Loading KYC workspace...</p>
-        </section>
-      </div>
-    );
+    return <DetailPageSkeleton title="Loading KYC workspace" subtitle="Preparing the debtor verification pack and current uploaded files." metrics={3} rows={4} />;
   }
 
   if (!debtor) {
