@@ -1,20 +1,9 @@
-"use client";
-
-import { useEffect, useState } from "react";
+import { auth } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
 import { SearchableMobileList } from "@/components/searchable-mobile-list";
 import { StatusPill } from "@/components/status-pill";
-import { fetchJson } from "@/lib/fetch-json";
-
-type CollectorsResponse = {
-  rows: Array<{
-    id: string;
-    name: string;
-    employeeCode: string;
-    phone: string;
-    routes: number;
-    status: string;
-  }>;
-};
+import { getAppSessionContextByClerkId } from "@/lib/auth/get-app-session-context";
+import { loadMobileCollectors } from "@/lib/mobile-data";
 
 function toneForStatus(status: string) {
   if (status === "active" || status === "accepted") return "emerald" as const;
@@ -22,24 +11,21 @@ function toneForStatus(status: string) {
   return "slate" as const;
 }
 
-export default function CollectorsPage() {
-  const [rows, setRows] = useState<CollectorsResponse["rows"]>([]);
+export default async function CollectorsPage() {
+  const { userId } = await auth();
+  if (!userId) {
+    redirect("/sign-in");
+  }
 
-  useEffect(() => {
-    let mounted = true;
+  let rows: Awaited<ReturnType<typeof loadMobileCollectors>>["rows"] = [];
 
-    fetchJson<CollectorsResponse>("/api/mobile/collectors")
-      .then((payload) => {
-        if (mounted) setRows(payload.rows || []);
-      })
-      .catch(() => {
-        if (mounted) setRows([]);
-      });
-
-    return () => {
-      mounted = false;
-    };
-  }, []);
+  try {
+    const session = await getAppSessionContextByClerkId(userId);
+    const payload = await loadMobileCollectors(session);
+    rows = payload.rows || [];
+  } catch {
+    rows = [];
+  }
 
   return (
     <div className="space-y-3 pb-4">

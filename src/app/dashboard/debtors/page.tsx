@@ -1,21 +1,9 @@
-"use client";
-
-import { useEffect, useState } from "react";
+import { auth } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
 import { SearchableMobileList } from "@/components/searchable-mobile-list";
 import { StatusPill } from "@/components/status-pill";
-import { fetchJson } from "@/lib/fetch-json";
-
-type DebtorsResponse = {
-  rows: Array<{
-    id: string;
-    name: string;
-    phone: string;
-    route: string;
-    collector: string;
-    status: string;
-    updatedAt: string;
-  }>;
-};
+import { getAppSessionContextByClerkId } from "@/lib/auth/get-app-session-context";
+import { loadMobileDebtors } from "@/lib/mobile-data";
 
 function toneForStatus(status: string) {
   if (status === "approved" || status === "active") return "emerald" as const;
@@ -28,24 +16,21 @@ function formatStatus(status: string) {
   return status.replaceAll("_", " ");
 }
 
-export default function DebtorsPage() {
-  const [rows, setRows] = useState<DebtorsResponse["rows"]>([]);
+export default async function DebtorsPage() {
+  const { userId } = await auth();
+  if (!userId) {
+    redirect("/sign-in");
+  }
 
-  useEffect(() => {
-    let mounted = true;
+  let rows: Awaited<ReturnType<typeof loadMobileDebtors>>["rows"] = [];
 
-    fetchJson<DebtorsResponse>("/api/mobile/debtors")
-      .then((payload) => {
-        if (mounted) setRows(payload.rows || []);
-      })
-      .catch(() => {
-        if (mounted) setRows([]);
-      });
-
-    return () => {
-      mounted = false;
-    };
-  }, []);
+  try {
+    const session = await getAppSessionContextByClerkId(userId);
+    const payload = await loadMobileDebtors(session);
+    rows = payload.rows || [];
+  } catch {
+    rows = [];
+  }
 
   return (
     <div className="space-y-3 pb-4">

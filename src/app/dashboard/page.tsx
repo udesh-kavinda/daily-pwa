@@ -1,81 +1,31 @@
-"use client";
-
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { auth } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
 import { ArrowRight, CalendarClock, FolderKanban, Route, ShieldCheck, Users, Wallet, Waves } from "lucide-react";
 import { StatusPill } from "@/components/status-pill";
-import { useUserStore } from "@/store/user-store";
 import { activityFeed, getRoleLabel, heroCopy, homeMetrics, workQueue } from "@/lib/mobile-demo-data";
-import { fetchJson } from "@/lib/fetch-json";
 import type { MobileRole } from "@/lib/mobile-demo-data";
 import { normalizeMobileRole } from "@/lib/mobile-route-access";
+import { getAppSessionContextByClerkId } from "@/lib/auth/get-app-session-context";
+import { loadMobileOverview } from "@/lib/mobile-data";
 
-type OverviewResponse = {
-  role: MobileRole;
-  organization?: { name: string | null } | null;
-  overview: {
-    hero: {
-      eyebrow: string;
-      title: string;
-      summary: string;
-      primaryAction: string;
-      secondaryAction: string;
-    };
-    metrics: Array<{
-      label: string;
-      value: number;
-      displayValue: string;
-      change: string;
-      tone: "emerald" | "amber" | "ink";
-    }>;
-    focus: Array<{
-      title: string;
-      subtitle: string;
-      amount: number;
-      displayValue: string;
-      status: string;
-      tone: "emerald" | "amber" | "ink";
-    }>;
-    activity: Array<{
-      title: string;
-      detail: string;
-      time: string;
-    }>;
-  };
-};
+export default async function DashboardPage() {
+  const { userId } = await auth();
+  if (!userId) {
+    redirect("/sign-in");
+  }
 
-export default function DashboardPage() {
-  const { role } = useUserStore();
-  const activeRole: MobileRole = normalizeMobileRole(role);
-  const [liveData, setLiveData] = useState<OverviewResponse | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [unavailable, setUnavailable] = useState(false);
+  let activeRole: MobileRole = "collector";
+  let liveData: Awaited<ReturnType<typeof loadMobileOverview>> | null = null;
+  let unavailable = false;
 
-  useEffect(() => {
-    let mounted = true;
-
-    async function load() {
-      try {
-        const payload = await fetchJson<OverviewResponse>("/api/mobile/overview");
-        if (!mounted) return;
-        setLiveData(payload);
-        setUnavailable(false);
-      } catch {
-        if (!mounted) return;
-        setUnavailable(true);
-      } finally {
-        if (mounted) {
-          setIsLoading(false);
-        }
-      }
-    }
-
-    load();
-
-    return () => {
-      mounted = false;
-    };
-  }, []);
+  try {
+    const session = await getAppSessionContextByClerkId(userId);
+    activeRole = normalizeMobileRole(session.role);
+    liveData = await loadMobileOverview(session);
+  } catch {
+    unavailable = true;
+  }
 
   const fallbackHero = heroCopy[activeRole];
   const fallbackMetrics = homeMetrics[activeRole].map((item) => ({
@@ -100,37 +50,31 @@ export default function DashboardPage() {
   const focus = liveData?.overview.focus || fallbackFocus;
   const activity = liveData?.overview.activity || fallbackActivity;
 
-  const heroIcon = useMemo(() => {
-    if (activeRole === "creditor") return <ShieldCheck size={22} />;
-    if (activeRole === "debtor") return <CalendarClock size={22} />;
-    return <Wallet size={22} />;
-  }, [activeRole]);
+  const heroIcon = activeRole === "creditor"
+    ? <ShieldCheck size={22} />
+    : activeRole === "debtor"
+      ? <CalendarClock size={22} />
+      : <Wallet size={22} />;
 
-  const sections = useMemo(() => {
-    if (activeRole === "creditor") {
-      return [
+  const sections = activeRole === "creditor"
+    ? [
         { href: "/dashboard/work", title: "Approvals", detail: "Review debtor and loan requests", icon: ShieldCheck },
         { href: "/dashboard/debtors", title: "Debtors", detail: "Open borrower list", icon: FolderKanban },
         { href: "/dashboard/loans", title: "Loans", detail: "Open loan table", icon: Wallet },
         { href: "/dashboard/routes", title: "Routes", detail: "Review coverage and assignments", icon: Route },
         { href: "/dashboard/collectors", title: "Collectors", detail: "Open field team list", icon: Users },
-      ];
-    }
-
-    if (activeRole === "collector") {
-      return [
-        { href: "/dashboard/work", title: "Routes", detail: "Open today’s route sequence", icon: Route },
-        { href: "/dashboard/debtors", title: "Debtors", detail: "Open assigned debtor list", icon: FolderKanban },
-        { href: "/collector", title: "Capture", detail: "Record a field collection", icon: Wallet },
-      ];
-    }
-
-    return [
-      { href: "/dashboard/work", title: "Schedule", detail: "See upcoming repayment activity", icon: CalendarClock },
-      { href: "/dashboard/loans", title: "Loans", detail: "Open your loan table", icon: Wallet },
-      { href: "/dashboard/notifications", title: "Alerts", detail: "See reminders and notices", icon: ShieldCheck },
-    ];
-  }, [activeRole]);
+      ]
+    : activeRole === "collector"
+      ? [
+          { href: "/dashboard/work", title: "Routes", detail: "Open today’s route sequence", icon: Route },
+          { href: "/dashboard/debtors", title: "Debtors", detail: "Open assigned debtor list", icon: FolderKanban },
+          { href: "/collector", title: "Capture", detail: "Record a field collection", icon: Wallet },
+        ]
+      : [
+          { href: "/dashboard/work", title: "Schedule", detail: "See upcoming repayment activity", icon: CalendarClock },
+          { href: "/dashboard/loans", title: "Loans", detail: "Open your loan table", icon: Wallet },
+          { href: "/dashboard/notifications", title: "Alerts", detail: "See reminders and notices", icon: ShieldCheck },
+        ];
 
   return (
     <div className="space-y-3 pb-4">
@@ -141,17 +85,13 @@ export default function DashboardPage() {
       ) : null}
 
       <section className="grid grid-cols-2 gap-2.5">
-        {isLoading && !liveData
-          ? Array.from({ length: 4 }).map((_, index) => (
-              <div key={index} className="mobile-panel h-[88px] animate-pulse bg-white/70" />
-            ))
-          : metrics.map((metric) => (
-              <div key={metric.label} className={`mobile-stat-tile ${metric.tone === "emerald" ? "metric-emerald" : metric.tone === "amber" ? "metric-amber" : "metric-ink"}`}>
-                <p className="mobile-text-tertiary text-[10px] uppercase tracking-[0.16em]">{metric.label}</p>
-                <p className="mobile-text-primary mt-1.5 text-[1.1rem] font-semibold leading-tight">{metric.displayValue}</p>
-                <p className="mobile-text-secondary mt-1.5 text-[11px] leading-snug">{metric.change}</p>
-              </div>
-            ))}
+        {metrics.map((metric) => (
+          <div key={metric.label} className={`mobile-stat-tile ${metric.tone === "emerald" ? "metric-emerald" : metric.tone === "amber" ? "metric-amber" : "metric-ink"}`}>
+            <p className="mobile-text-tertiary text-[10px] uppercase tracking-[0.16em]">{metric.label}</p>
+            <p className="mobile-text-primary mt-1.5 text-[1.1rem] font-semibold leading-tight">{metric.displayValue}</p>
+            <p className="mobile-text-secondary mt-1.5 text-[11px] leading-snug">{metric.change}</p>
+          </div>
+        ))}
       </section>
 
       <section className="mobile-panel px-4 py-4">

@@ -1,23 +1,9 @@
-"use client";
-
-import { useEffect, useState } from "react";
+import { auth } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
 import { SearchableMobileList } from "@/components/searchable-mobile-list";
 import { StatusPill } from "@/components/status-pill";
-import { fetchJson } from "@/lib/fetch-json";
-
-type LoansResponse = {
-  rows: Array<{
-    id: string;
-    loanNumber: string;
-    debtor: string;
-    collector: string;
-    dailyPay: number;
-    outstanding: number;
-    totalAmount: number;
-    endDate: string;
-    status: string;
-  }>;
-};
+import { getAppSessionContextByClerkId } from "@/lib/auth/get-app-session-context";
+import { loadMobileLoans } from "@/lib/mobile-data";
 
 function formatCurrency(amount: number) {
   return new Intl.NumberFormat("en-LK", {
@@ -34,24 +20,21 @@ function toneForStatus(status: string) {
   return "slate" as const;
 }
 
-export default function LoansPage() {
-  const [rows, setRows] = useState<LoansResponse["rows"]>([]);
+export default async function LoansPage() {
+  const { userId } = await auth();
+  if (!userId) {
+    redirect("/sign-in");
+  }
 
-  useEffect(() => {
-    let mounted = true;
+  let rows: Awaited<ReturnType<typeof loadMobileLoans>>["rows"] = [];
 
-    fetchJson<LoansResponse>("/api/mobile/loans")
-      .then((payload) => {
-        if (mounted) setRows(payload.rows || []);
-      })
-      .catch(() => {
-        if (mounted) setRows([]);
-      });
-
-    return () => {
-      mounted = false;
-    };
-  }, []);
+  try {
+    const session = await getAppSessionContextByClerkId(userId);
+    const payload = await loadMobileLoans(session);
+    rows = payload.rows || [];
+  } catch {
+    rows = [];
+  }
 
   return (
     <div className="space-y-3 pb-4">

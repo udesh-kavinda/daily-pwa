@@ -118,7 +118,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       mounted = false;
       window.clearInterval(timer);
     };
-  }, [pathname]);
+  }, []);
 
   return (
     <div className="min-h-screen pb-28 text-stone-900">

@@ -1,39 +1,25 @@
-"use client";
-
-import { useEffect, useState } from "react";
+import { auth } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
 import { SearchableMobileList } from "@/components/searchable-mobile-list";
 import { StatusPill } from "@/components/status-pill";
-import { fetchJson } from "@/lib/fetch-json";
+import { getAppSessionContextByClerkId } from "@/lib/auth/get-app-session-context";
+import { loadMobileRoutes } from "@/lib/mobile-data";
 
-type RoutesResponse = {
-  rows: Array<{
-    id: string;
-    name: string;
-    area: string;
-    collector: string;
-    debtors: number;
-    status: string;
-  }>;
-};
+export default async function RoutesPage() {
+  const { userId } = await auth();
+  if (!userId) {
+    redirect("/sign-in");
+  }
 
-export default function RoutesPage() {
-  const [rows, setRows] = useState<RoutesResponse["rows"]>([]);
+  let rows: Awaited<ReturnType<typeof loadMobileRoutes>>["rows"] = [];
 
-  useEffect(() => {
-    let mounted = true;
-
-    fetchJson<RoutesResponse>("/api/mobile/routes")
-      .then((payload) => {
-        if (mounted) setRows(payload.rows || []);
-      })
-      .catch(() => {
-        if (mounted) setRows([]);
-      });
-
-    return () => {
-      mounted = false;
-    };
-  }, []);
+  try {
+    const session = await getAppSessionContextByClerkId(userId);
+    const payload = await loadMobileRoutes(session);
+    rows = payload.rows || [];
+  } catch {
+    rows = [];
+  }
 
   return (
     <div className="space-y-3 pb-4">

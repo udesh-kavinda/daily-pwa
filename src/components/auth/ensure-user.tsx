@@ -40,26 +40,51 @@ type EnsureUserPayload = {
   }>;
 };
 
+let sessionBootstrapPromise: Promise<EnsureUserPayload | null> | null = null;
+let hasBootstrappedSession = false;
+
 export function EnsureUser() {
   const pathname = usePathname();
   const router = useRouter();
-  const { setLoading, setSession, clear } = useUserStore();
+  const {
+    user,
+    role,
+    isLoading,
+    onboardingRequired,
+    setLoading,
+    setSession,
+    clear,
+  } = useUserStore();
 
   useEffect(() => {
     let active = true;
 
     async function run() {
+      if (hasBootstrappedSession) {
+        setLoading(false);
+        return;
+      }
+
       setLoading(true);
       try {
-        const response = await fetch("/api/auth/ensure-user", {
-          method: "POST",
-          cache: "no-store",
-        });
-        const payload = (await response.json().catch(() => null)) as EnsureUserPayload | null;
+        if (!sessionBootstrapPromise) {
+          sessionBootstrapPromise = fetch("/api/auth/ensure-user", {
+            method: "POST",
+            cache: "no-store",
+          }).then(async (response) => {
+            const payload = (await response.json().catch(() => null)) as EnsureUserPayload | null;
+            if (!response.ok || !payload?.user || !payload?.role) {
+              return null;
+            }
+            return payload;
+          });
+        }
+
+        const payload = await sessionBootstrapPromise;
 
         if (!active) return;
 
-        if (!response.ok || !payload?.user || !payload?.role) {
+        if (!payload?.user || !payload?.role) {
           clear();
           return;
         }
@@ -86,23 +111,7 @@ export function EnsureUser() {
           organization: payload.organization || null,
           organizations: payload.organizations || [],
         });
-
-        if (!isAllowedForMobileRole(pathname, payload.role)) {
-          router.replace(getMobileHomePath(payload.role));
-          return;
-        }
-
-        if (payload.onboardingRequired && payload.onboardingPath && pathname !== payload.onboardingPath) {
-          router.replace(payload.onboardingPath);
-          return;
-        }
-
-        if (
-          !payload.onboardingRequired &&
-          (pathname === "/dashboard/onboarding/collector" || pathname === "/dashboard/onboarding/debtor")
-        ) {
-          router.replace(getMobileHomePath(payload.role));
-        }
+        hasBootstrappedSession = true;
       } catch {
         if (active) {
           clear();
@@ -114,12 +123,34 @@ export function EnsureUser() {
       }
     }
 
-    run();
+    void run();
 
     return () => {
       active = false;
     };
-  }, [pathname, router, setLoading, setSession, clear]);
+  }, [setLoading, setSession, clear]);
+
+  useEffect(() => {
+    if (isLoading || !user || !role) {
+      return;
+    }
+
+    if (!isAllowedForMobileRole(pathname, role)) {
+      router.replace(getMobileHomePath(role));
+      return;
+    }
+
+    const onboardingPath = role === "debtor" ? "/dashboard/onboarding/debtor" : "/dashboard/onboarding/collector";
+
+    if (onboardingRequired && pathname !== onboardingPath) {
+      router.replace(onboardingPath);
+      return;
+    }
+
+    if (!onboardingRequired && (pathname === "/dashboard/onboarding/collector" || pathname === "/dashboard/onboarding/debtor")) {
+      router.replace(getMobileHomePath(role));
+    }
+  }, [isLoading, onboardingRequired, pathname, role, router, user]);
 
   return null;
 }
