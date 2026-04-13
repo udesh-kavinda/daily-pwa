@@ -2,18 +2,17 @@ import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getAppSessionContextByClerkId } from "@/lib/auth/get-app-session-context";
+import { loadMobileLoanRequestByClerkId, MobileLoanRequestError } from "@/lib/mobile-loan-request";
 
 type LoanRequestContextRow = {
   id: string;
   first_name: string | null;
   last_name: string | null;
-  phone: string | null;
   approval_status?: string | null;
   is_verified?: boolean | null;
   id_photo_front_url?: string | null;
   debtor_photo_url?: string | null;
   signature_url?: string | null;
-  route?: { id?: string | null; name?: string | null; area?: string | null } | Array<{ id?: string | null; name?: string | null; area?: string | null }> | null;
 };
 
 type CreateLoanRequestPayload = {
@@ -60,152 +59,19 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const session = await getAppSessionContextByClerkId(userId);
-    if (session.role !== "collector" || !session.collector) {
-      return NextResponse.json({ error: "Collector access is required" }, { status: 403 });
-    }
-
     const { searchParams } = new URL(req.url);
     const debtorId = searchParams.get("debtorId");
     if (!debtorId) {
       return NextResponse.json({ error: "debtorId is required" }, { status: 400 });
     }
 
-    const supabase = createAdminClient();
-
-    const { data: settings, error: settingsError } = await supabase
-      .from("creditor_settings")
-      .select("business_name, default_interest_rate, default_loan_tenure, currency")
-      .eq("user_id", session.creditorId)
-      .maybeSingle();
-
-    if (settingsError) {
-      return NextResponse.json({ error: settingsError.message }, { status: 500 });
-    }
-
-    const debtorResult = await supabase
-      .from("debtors")
-      .select(`
-        id,
-        first_name,
-        last_name,
-        phone,
-        approval_status,
-        is_verified,
-        id_photo_front_url,
-        debtor_photo_url,
-        signature_url,
-        route:routes(id, name, area)
-      `)
-      .eq("id", debtorId)
-      .eq("creditor_id", session.creditorId)
-      .or(collectorDebtorFilter(session.collector.id))
-      .maybeSingle();
-
-    let debtor = debtorResult.data as LoanRequestContextRow | null;
-    let debtorError = debtorResult.error;
-
-    if (debtorError && debtorError.message.includes("requested_by_collector_id")) {
-      const legacyResult = await supabase
-        .from("debtors")
-        .select(`
-          id,
-          first_name,
-          last_name,
-          phone,
-          is_verified,
-          id_photo_front_url,
-          debtor_photo_url,
-          signature_url,
-          route:routes(id, name, area)
-        `)
-        .eq("id", debtorId)
-        .eq("creditor_id", session.creditorId)
-        .eq("collector_id", session.collector.id)
-        .maybeSingle();
-
-      debtor = legacyResult.data
-        ? {
-            ...(legacyResult.data as LoanRequestContextRow),
-            approval_status: "approved",
-          }
-        : null;
-      debtorError = legacyResult.error;
-    }
-
-    if (debtorError || !debtor) {
-      return NextResponse.json({ error: debtorError?.message || "Debtor not found" }, { status: 404 });
-    }
-
-    const { data: loans, error: loansError } = await supabase
-      .from("loans")
-      .select("id, loan_number, status, total_amount, daily_installment, created_at")
-      .eq("creditor_id", session.creditorId)
-      .eq("debtor_id", debtorId)
-      .order("created_at", { ascending: false })
-      .limit(6);
-
-    if (loansError) {
-      return NextResponse.json({ error: loansError.message }, { status: 500 });
-    }
-
-    const approvalStatus = debtor.approval_status || "approved";
-    const verified = Boolean(debtor.is_verified || hasCompleteKyc(debtor));
-    const route = Array.isArray(debtor.route) ? debtor.route[0] || null : debtor.route || null;
-    const pendingLoans = (loans || []).filter((loan) => String(loan.status || "") === "pending_approval").length;
-
-    return NextResponse.json({
-      collector: {
-        id: session.collector.id,
-        employeeCode: session.collector.employee_code || null,
-      },
-      organization: {
-        name: settings?.business_name || session.organization?.name || "Daily+ Organization",
-        currency: settings?.currency || "LKR",
-      },
-      debtor: {
-        id: debtor.id,
-        name: debtorName(debtor),
-        phone: debtor.phone || null,
-        route,
-        approvalStatus,
-        isVerified: verified,
-        kyc: {
-          idFront: Boolean(debtor.id_photo_front_url),
-          photo: Boolean(debtor.debtor_photo_url),
-          signature: Boolean(debtor.signature_url),
-        },
-      },
-      defaults: {
-        principalAmount: 0,
-        interestRate: Number(settings?.default_interest_rate || 10),
-        tenureDays: Number(settings?.default_loan_tenure || 30),
-        startDate: new Date().toISOString().split("T")[0],
-      },
-      existing: {
-        totalLoans: (loans || []).length,
-        pendingLoans,
-      },
-      flags: {
-        canSubmit: approvalStatus === "approved",
-        blocker:
-          approvalStatus === "pending_approval"
-            ? "This debtor is still waiting for creditor approval. A loan request can be submitted after that review clears."
-            : approvalStatus === "rejected"
-              ? "This debtor request was rejected. Update the debtor profile with the creditor first before requesting a loan."
-              : null,
-        kycReady: verified,
-      },
-      recentLoans: (loans || []).map((loan) => ({
-        id: loan.id,
-        loanNumber: loan.loan_number || "Loan",
-        status: String(loan.status || "pending_approval"),
-        totalAmount: toNumber(loan.total_amount),
-        dailyInstallment: toNumber(loan.daily_installment),
-        createdAt: loan.created_at,
-      })),
-    });
+    const payload = await loadMobileLoanRequestByClerkId(userId, debtorId);
+    return NextResponse.json(payload);
   } catch (error: unknown) {
+    if (error instanceof MobileLoanRequestError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
+
     const message = error instanceof Error ? error.message : "Failed to load loan request context";
     return NextResponse.json({ error: message }, { status: 500 });
   }

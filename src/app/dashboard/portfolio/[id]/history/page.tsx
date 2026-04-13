@@ -1,41 +1,10 @@
-"use client";
-
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { auth } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
 import { ArrowLeft, WalletCards } from "lucide-react";
-import { fetchJson } from "@/lib/fetch-json";
 import { formatBorrowerStatus } from "@/lib/borrower-copy";
-import { DetailPageSkeleton } from "@/components/detail-page-skeleton";
-
-type HistoryPayload = {
-  loan?: {
-    id: string;
-    loanNumber: string;
-    creditorName: string;
-    dailyInstallment: number;
-    amountRemaining: number;
-  } | null;
-  organization?: { name?: string | null } | null;
-  historySummary: {
-    totalEntries: number;
-    successfulEntries: number;
-    missedEntries: number;
-    deferredEntries: number;
-    totalCaptured: number;
-    averageCaptured: number;
-    lastPaymentDate: string | null;
-  };
-  collections: Array<{
-    id: string;
-    status: string;
-    amountDue: number;
-    amountCollected: number;
-    paymentMethod: string | null;
-    collectionDate: string;
-    collectedAt: string | null;
-  }>;
-};
+import { getAppSessionContextByClerkId } from "@/lib/auth/get-app-session-context";
+import { loadMobileLoanHistory, MobileLoanHistoryError } from "@/lib/mobile-loan-history";
 
 function formatCurrency(amount: number) {
   return new Intl.NumberFormat("en-LK", {
@@ -56,51 +25,38 @@ function formatDate(value: string | null | undefined) {
   }).format(parsed);
 }
 
-export default function DebtorLoanHistoryPage() {
-  const params = useParams<{ id: string }>();
-  const loanId = params?.id;
-  const [loading, setLoading] = useState(true);
-  const [payload, setPayload] = useState<HistoryPayload | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let mounted = true;
-
-    async function load() {
-      if (!loanId) return;
-      setLoading(true);
-      try {
-        const nextPayload = await fetchJson<HistoryPayload>(`/api/mobile/portfolio/${loanId}/history`);
-        if (!mounted) return;
-        setPayload(nextPayload);
-        setError(null);
-      } catch (fetchError: unknown) {
-        if (!mounted) return;
-        const message = fetchError instanceof Error ? fetchError.message : "Failed to load repayment history";
-        setPayload(null);
-        setError(message);
-      } finally {
-        if (mounted) setLoading(false);
-      }
-    }
-
-    void load();
-    return () => {
-      mounted = false;
-    };
-  }, [loanId]);
-
-  if (loading) {
-    return <DetailPageSkeleton title="Loading repayment history" subtitle="Preparing repayment totals and the visit timeline for this loan." metrics={4} rows={5} />;
+export default async function DebtorLoanHistoryPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { userId } = await auth();
+  if (!userId) {
+    redirect("/sign-in");
   }
 
-  if (!payload?.loan || error) {
+  const session = await getAppSessionContextByClerkId(userId);
+  const { id } = await params;
+
+  let payload: Awaited<ReturnType<typeof loadMobileLoanHistory>> | null = null;
+  let message: string | null = null;
+
+  try {
+    payload = await loadMobileLoanHistory(session, id);
+  } catch (error: unknown) {
+    message =
+      error instanceof MobileLoanHistoryError || error instanceof Error
+        ? error.message
+        : "This loan could not be loaded.";
+  }
+
+  if (!payload?.loan) {
     return (
       <div className="space-y-4 pb-4">
         <section className="mobile-panel px-5 py-6 text-center">
-          <p className="text-base font-semibold text-[#14213d]">Repayment history is unavailable.</p>
-          <p className="mt-2 text-sm leading-relaxed text-stone-600">{error || "This loan could not be loaded."}</p>
-          <Link href="/dashboard/portfolio" className="mt-4 inline-flex items-center gap-2 rounded-full bg-[#14213d] px-4 py-3 text-sm font-semibold text-white">
+          <p className="mobile-text-primary text-base font-semibold">Repayment history is unavailable.</p>
+          <p className="mobile-text-secondary mt-2 text-sm leading-relaxed">{message}</p>
+          <Link href="/dashboard/portfolio" className="mobile-inline-action mt-4">
             <ArrowLeft size={16} />
             Back to loans
           </Link>
@@ -110,15 +66,15 @@ export default function DebtorLoanHistoryPage() {
   }
 
   return (
-    <div className="space-y-4 pb-4">
-      <section className="mobile-panel-strong px-5 py-5">
-        <Link href={`/dashboard/portfolio/${payload.loan.id}`} className="inline-flex items-center gap-2 text-sm font-semibold text-stone-600">
+    <div className="space-y-3 pb-4">
+      <section className="mobile-panel px-4 py-4">
+        <Link href={`/dashboard/portfolio/${payload.loan.id}`} className="mobile-text-secondary inline-flex items-center gap-2 text-sm font-semibold">
           <ArrowLeft size={16} />
           Back to loan detail
         </Link>
-        <p className="mt-4 text-[11px] uppercase tracking-[0.18em] text-emerald-700">{payload.organization?.name || payload.loan.creditorName}</p>
-        <h2 className="mt-1 text-xl font-semibold text-[#14213d]">{payload.loan.loanNumber}</h2>
-        <p className="mt-2 text-sm text-stone-600">A simple timeline of each visit, recorded amount, and outcome on this loan.</p>
+        <p className="mobile-section-label mt-4">{payload.organization?.name || payload.loan.creditorName}</p>
+        <h2 className="mobile-text-primary mt-1 text-xl font-semibold">{payload.loan.loanNumber}</h2>
+        <p className="mobile-text-secondary mt-2 text-sm">A simple timeline of each visit, recorded amount, and outcome on this loan.</p>
 
         <div className="mt-5 grid grid-cols-2 gap-3">
           <SummaryCard label="Total received" value={formatCurrency(payload.historySummary.totalCaptured)} />
@@ -128,15 +84,15 @@ export default function DebtorLoanHistoryPage() {
         </div>
       </section>
 
-      <section className="mobile-panel px-5 py-5">
+      <section className="mobile-panel px-4 py-4">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-[11px] uppercase tracking-[0.18em] text-stone-500">At a glance</p>
-            <h3 className="mt-1 text-lg font-semibold text-[#14213d]">Repayment summary</h3>
+            <p className="mobile-section-label">At a glance</p>
+            <h3 className="mobile-text-primary mt-1 text-lg font-semibold">Repayment summary</h3>
           </div>
-          <WalletCards size={18} className="text-stone-400" />
+          <WalletCards size={18} className="text-stone-400 dark:text-white/40" />
         </div>
-        <div className="mt-4 grid gap-3">
+        <div className="mobile-compact-list mt-4">
           <HistoryRow label="Last payment received" value={formatDate(payload.historySummary.lastPaymentDate)} />
           <HistoryRow label="Activity recorded" value={String(payload.historySummary.totalEntries)} />
           <HistoryRow label="Expected daily amount" value={formatCurrency(payload.loan.dailyInstallment)} />
@@ -147,23 +103,23 @@ export default function DebtorLoanHistoryPage() {
       <section className="space-y-3">
         {payload.collections.length === 0 ? (
           <section className="mobile-panel px-5 py-6 text-center">
-            <p className="text-base font-semibold text-[#14213d]">No repayment records yet.</p>
-            <p className="mt-2 text-sm leading-relaxed text-stone-600">
+            <p className="mobile-text-primary text-base font-semibold">No repayment records yet.</p>
+            <p className="mobile-text-secondary mt-2 text-sm leading-relaxed">
               When a payment, missed visit, or rescheduled visit is recorded, it will appear here with the date and outcome.
             </p>
           </section>
         ) : (
           payload.collections.map((entry) => (
-            <section key={entry.id} className="mobile-panel px-5 py-5">
+            <section key={entry.id} className="mobile-panel px-4 py-4">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-[11px] uppercase tracking-[0.18em] text-stone-500">{formatDate(entry.collectionDate)}</p>
-                  <h3 className="mt-1 text-lg font-semibold text-[#14213d]">{formatCurrency(entry.amountCollected || entry.amountDue)}</h3>
-                  <p className="mt-2 text-sm text-stone-600">
+                  <p className="mobile-text-tertiary text-[11px] uppercase tracking-[0.18em]">{formatDate(entry.collectionDate)}</p>
+                  <h3 className="mobile-text-primary mt-1 text-lg font-semibold">{formatCurrency(entry.amountCollected || entry.amountDue)}</h3>
+                  <p className="mobile-text-secondary mt-2 text-sm">
                     Expected {formatCurrency(entry.amountDue)} · {entry.paymentMethod || "cash"}
                   </p>
                 </div>
-                <span className="rounded-full bg-stone-900/6 px-3 py-1 text-[11px] font-semibold capitalize text-stone-700">
+                <span className="mobile-soft-badge capitalize">
                   {formatBorrowerStatus(entry.status)}
                 </span>
               </div>
@@ -177,18 +133,18 @@ export default function DebtorLoanHistoryPage() {
 
 function SummaryCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-[22px] border border-stone-900/8 bg-white/75 px-4 py-4">
-      <p className="text-[10px] uppercase tracking-[0.16em] text-stone-500">{label}</p>
-      <p className="mt-2 text-base font-semibold text-[#14213d]">{value}</p>
+    <div className="mobile-panel-strong px-4 py-4">
+      <p className="mobile-text-tertiary text-[10px] uppercase tracking-[0.16em]">{label}</p>
+      <p className="mobile-text-primary mt-2 text-base font-semibold">{value}</p>
     </div>
   );
 }
 
 function HistoryRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-center justify-between gap-4 rounded-[22px] bg-white/72 px-4 py-4">
-      <span className="text-sm text-stone-500">{label}</span>
-      <span className="text-sm font-semibold text-[#14213d] text-right">{value}</span>
+    <div className="mobile-row">
+      <span className="mobile-text-secondary text-sm">{label}</span>
+      <span className="mobile-text-primary text-right text-sm font-semibold">{value}</span>
     </div>
   );
 }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getAppSessionContextByClerkId } from "@/lib/auth/get-app-session-context";
+import { loadMobileDebtorKycByClerkId, MobileDebtorKycError } from "@/lib/mobile-debtor-kyc";
 
 const BUCKET = "kyc-documents";
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
@@ -98,41 +99,14 @@ export async function GET(_: NextRequest, { params }: { params: Promise<{ id: st
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const session = await getAppSessionContextByClerkId(userId);
-    if (session.role !== "collector" || !session.collector) {
-      return NextResponse.json({ error: "Collector access is required" }, { status: 403 });
-    }
-
     const { id } = await params;
-    const supabase = createAdminClient();
-    const { debtor, debtorError } = await resolveCollectorDebtor({
-      supabase,
-      debtorId: id,
-      creditorId: session.creditorId,
-      collectorId: session.collector.id,
-    });
-
-    if (debtorError || !debtor) {
-      return NextResponse.json({ error: debtorError?.message || "Debtor not found" }, { status: 404 });
+    const payload = await loadMobileDebtorKycByClerkId(userId, id);
+    return NextResponse.json(payload);
+  } catch (error: unknown) {
+    if (error instanceof MobileDebtorKycError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
     }
 
-    return NextResponse.json({
-      debtor: {
-        id: debtor.id,
-        name: debtorName(debtor),
-        approvalStatus: debtor.approval_status || "approved",
-        kyc: {
-          idFrontUrl: debtor.id_photo_front_url || null,
-          photoUrl: debtor.debtor_photo_url || null,
-          signatureUrl: debtor.signature_url || null,
-          idFront: Boolean(debtor.id_photo_front_url),
-          photo: Boolean(debtor.debtor_photo_url),
-          signature: Boolean(debtor.signature_url),
-          isVerified: Boolean(debtor.is_verified || (debtor.id_photo_front_url && debtor.debtor_photo_url && debtor.signature_url)),
-        },
-      },
-    });
-  } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Failed to load debtor KYC";
     return NextResponse.json({ error: message }, { status: 500 });
   }

@@ -1,100 +1,34 @@
-"use client";
-
-import dynamic from "next/dynamic";
-import { useEffect, useMemo, useState } from "react";
+import { auth } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
 import { BellRing, Building2, ShieldCheck, Smartphone } from "lucide-react";
-import { useUserStore } from "@/store/user-store";
-import { fetchJson } from "@/lib/fetch-json";
-import { formatLkr, getRoleLabel, profileByRole } from "@/lib/mobile-demo-data";
-import type { MobileRole } from "@/lib/mobile-demo-data";
 import { ThemeToggle } from "@/components/theme-toggle";
-
-const ClerkLogoutButton = dynamic(
-  () => import("@/components/auth/clerk-logout-button").then((module) => module.ClerkLogoutButton),
-  { ssr: false }
-);
-
-type ProfileResponse = {
-  profile: {
-    id: string;
-    email: string;
-    first_name: string;
-    last_name: string;
-    phone: string | null;
-    role: MobileRole | "recovery_agent";
-    created_at: string;
-    updated_at: string;
-  } | null;
-  role: MobileRole | "recovery_agent";
-  organization: {
-    id: string;
-    name: string | null;
-    ownerName: string | null;
-    ownerEmail: string | null;
-  } | null;
-  organizations: Array<{
-    id: string;
-    name: string | null;
-    ownerName: string | null;
-    ownerEmail: string | null;
-  }>;
-  summary: {
-    employeeCode?: string | null;
-    assignedRoutes?: string[] | null;
-    inviteStatus?: string | null;
-    activeLoans?: number;
-    totalOutstanding?: number;
-    estimated30DayCommitment?: number;
-  } | null;
-};
+import { ClerkLogoutButton } from "@/components/auth/clerk-logout-button";
+import { getAppSessionContextByClerkId } from "@/lib/auth/get-app-session-context";
+import { loadMobileProfile, type MobileProfileResponse } from "@/lib/mobile-data";
+import { formatLkr, getRoleLabel } from "@/lib/mobile-demo-data";
+import type { MobileRole } from "@/lib/mobile-demo-data";
 
 function formatDate(date: string) {
   return new Intl.DateTimeFormat("en-LK", { month: "short", day: "numeric", year: "numeric" }).format(new Date(date));
 }
 
-export default function ProfilePage() {
-  const { role: storedRole, user } = useUserStore();
-  const activeRole: MobileRole = storedRole === "creditor" || storedRole === "debtor" ? storedRole : "collector";
-  const [data, setData] = useState<ProfileResponse | null>(null);
+function buildGroups(activeRole: MobileRole, data: MobileProfileResponse) {
+  const profile = data.profile;
+  if (!profile) return [];
 
-  useEffect(() => {
-    let mounted = true;
-
-    fetchJson<ProfileResponse>("/api/mobile/profile")
-      .then((payload) => {
-        if (mounted) {
-          setData(payload);
-        }
-      })
-      .catch(() => {
-        if (mounted) {
-          setData(null);
-        }
-      });
-
-    return () => {
-      mounted = false;
-    };
-  }, []);
-
-  const groups = useMemo(() => {
-    if (!data?.profile) {
-      return profileByRole[activeRole];
-    }
-
-    const profile = data.profile;
-    const base = [
-      {
-        title: "Account",
-        items: [
-          { label: "Name", value: `${profile.first_name} ${profile.last_name}`.trim() },
-          { label: "Email", value: profile.email },
-          { label: "Phone", value: profile.phone || "Not added yet" },
-        ],
-      },
-      {
-        title: data.organizations.length > 1 ? "Organizations" : "Workspace",
-        items: data.organizations.length > 1
+  const base = [
+    {
+      title: "Account",
+      items: [
+        { label: "Name", value: `${profile.first_name} ${profile.last_name}`.trim() },
+        { label: "Email", value: profile.email },
+        { label: "Phone", value: profile.phone || "Not added yet" },
+      ],
+    },
+    {
+      title: data.organizations.length > 1 ? "Organizations" : "Workspace",
+      items:
+        data.organizations.length > 1
           ? data.organizations.map((organization) => ({
               label: organization.name || "Organization",
               value: organization.ownerName || organization.ownerEmail || "Active relationship",
@@ -105,52 +39,62 @@ export default function ProfilePage() {
                 value: data.organization?.ownerName || data.organization?.ownerEmail || "Live workspace",
               },
             ],
-      },
-    ];
+    },
+  ];
 
-    if (activeRole === "collector") {
-      return [
-        ...base,
-        {
-          title: "Collector readiness",
-          items: [
-            { label: "Employee code", value: String(data.summary?.employeeCode || "Pending") },
-            { label: "Assigned routes", value: `${Array.isArray(data.summary?.assignedRoutes) ? data.summary?.assignedRoutes.length : 0}` },
-            { label: "Invite status", value: String(data.summary?.inviteStatus || "Active") },
-          ],
-        },
-      ];
-    }
-
-    if (activeRole === "debtor") {
-      return [
-        ...base,
-        {
-          title: "Repayment outlook",
-          items: [
-            { label: "Active loans", value: String(data.summary?.activeLoans || 0) },
-            { label: "Outstanding", value: formatLkr(Number(data.summary?.totalOutstanding || 0)) },
-            { label: "30-day commitment", value: formatLkr(Number(data.summary?.estimated30DayCommitment || 0)) },
-          ],
-        },
-      ];
-    }
-
+  if (activeRole === "collector") {
     return [
       ...base,
       {
-        title: "Management view",
+        title: "Collector readiness",
         items: [
-          { label: "Role", value: getRoleLabel(activeRole) },
-          { label: "Joined", value: formatDate(profile.created_at) },
-          { label: "Updated", value: formatDate(profile.updated_at) },
+          { label: "Employee code", value: String(data.summary?.employeeCode || "Pending") },
+          { label: "Assigned routes", value: `${Array.isArray(data.summary?.assignedRoutes) ? data.summary?.assignedRoutes.length : 0}` },
+          { label: "Invite status", value: String(data.summary?.inviteStatus || "Active") },
         ],
       },
     ];
-  }, [activeRole, data]);
+  }
 
-  const initials = `${(data?.profile?.first_name || user?.first_name || "D")[0] || "D"}${(data?.profile?.last_name || user?.last_name || "+")[0] || "+"}`.toUpperCase();
-  const headline = data?.profile ? `${data.profile.first_name} ${data.profile.last_name}`.trim() : `${getRoleLabel(activeRole)} mode`;
+  if (activeRole === "debtor") {
+    return [
+      ...base,
+      {
+        title: "Repayment outlook",
+        items: [
+          { label: "Active loans", value: String(data.summary?.activeLoans || 0) },
+          { label: "Outstanding", value: formatLkr(Number(data.summary?.totalOutstanding || 0)) },
+          { label: "30-day commitment", value: formatLkr(Number(data.summary?.estimated30DayCommitment || 0)) },
+        ],
+      },
+    ];
+  }
+
+  return [
+    ...base,
+    {
+      title: "Management view",
+      items: [
+        { label: "Role", value: getRoleLabel(activeRole) },
+        { label: "Joined", value: formatDate(profile.created_at) },
+        { label: "Updated", value: formatDate(profile.updated_at) },
+      ],
+    },
+  ];
+}
+
+export default async function ProfilePage() {
+  const { userId } = await auth();
+  if (!userId) {
+    redirect("/sign-in");
+  }
+
+  const session = await getAppSessionContextByClerkId(userId);
+  const data = await loadMobileProfile(session);
+  const activeRole: MobileRole = data.role === "creditor" || data.role === "debtor" ? data.role : "collector";
+  const groups = buildGroups(activeRole, data);
+  const initials = `${(data.profile?.first_name || "D")[0] || "D"}${(data.profile?.last_name || "+")[0] || "+"}`.toUpperCase();
+  const headline = data.profile ? `${data.profile.first_name} ${data.profile.last_name}`.trim() : `${getRoleLabel(activeRole)} mode`;
 
   return (
     <div className="space-y-3 pb-4">
@@ -163,7 +107,7 @@ export default function ProfilePage() {
             </div>
             <div>
               <h2 className="mobile-text-primary text-[1.15rem] font-semibold leading-none">{headline}</h2>
-              <p className="mobile-text-secondary mt-1 text-[13px]">{data?.organization?.name || "Daily+ Mobile workspace"}</p>
+              <p className="mobile-text-secondary mt-1 text-[13px]">{data.organization?.name || "Daily+ Mobile workspace"}</p>
               <div className="mt-2 inline-flex rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 dark:bg-emerald-500/14 dark:text-emerald-300">
                 {getRoleLabel(activeRole)}
               </div>
@@ -194,7 +138,7 @@ export default function ProfilePage() {
         {[
           { title: "Notifications", detail: "Receipts, reminders, and route alerts", icon: BellRing },
           { title: "Security", detail: "Clerk identity backed by the same Daily+ organization rules", icon: ShieldCheck },
-          { title: "Workspace", detail: (data?.organizations?.length || 0) > 1 ? "You are linked to multiple creditor relationships" : "Single-organization mobile workspace", icon: Building2 },
+          { title: "Workspace", detail: (data.organizations?.length || 0) > 1 ? "You are linked to multiple creditor relationships" : "Single-organization mobile workspace", icon: Building2 },
           { title: "Device mode", detail: "Install, offline behavior, and future mobile permissions", icon: Smartphone },
         ].map((item) => {
           const Icon = item.icon;
