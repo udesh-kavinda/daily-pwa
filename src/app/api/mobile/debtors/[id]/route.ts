@@ -97,14 +97,14 @@ export async function GET(_: NextRequest, { params }: { params: Promise<{ id: st
     }
 
     const session = await getAppSessionContextByClerkId(userId);
-    if (session.role !== "collector" || !session.collector) {
-      return NextResponse.json({ error: "Collector access is required" }, { status: 403 });
+    if (session.role !== "collector" && session.role !== "creditor") {
+      return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
     const { id } = await params;
     const supabase = createAdminClient();
 
-    const debtorQuery = supabase
+    let debtorQuery = supabase
       .from("debtors")
       .select(`
         id,
@@ -132,12 +132,15 @@ export async function GET(_: NextRequest, { params }: { params: Promise<{ id: st
         )
       `)
       .eq("id", id)
-      .eq("creditor_id", session.creditorId)
-      .or(buildCollectorDebtorAccessFilter(session.collector.id));
+      .eq("creditor_id", session.creditorId);
+
+    if (session.role === "collector" && session.collector) {
+      debtorQuery = debtorQuery.or(buildCollectorDebtorAccessFilter(session.collector.id));
+    }
 
     let { data: debtor, error: debtorError }: { data: DebtorDetailRow | null; error: QueryError } = await debtorQuery.maybeSingle();
 
-    if (debtorError && debtorError.message.includes("requested_by_collector_id")) {
+    if (debtorError && debtorError.message.includes("requested_by_collector_id") && session.role === "collector" && session.collector) {
       const legacyDebtor = await supabase
         .from("debtors")
         .select(`
@@ -235,6 +238,7 @@ export async function GET(_: NextRequest, { params }: { params: Promise<{ id: st
     const kycVerified = Boolean(debtor.is_verified || (debtor.id_photo_front_url && debtor.debtor_photo_url && debtor.signature_url));
     const canRequestLoan = approvalStatus === "approved";
     const portalAccessConfigured = Boolean("portal_email" in debtor ? debtor.portal_email : null);
+    const isCollectorRole = session.role === "collector";
 
     return NextResponse.json({
       debtor: {
@@ -267,13 +271,17 @@ export async function GET(_: NextRequest, { params }: { params: Promise<{ id: st
             : "Borrower portal access is managed by the creditor and can be added later.",
         },
         permissions: {
-          canManageKyc: true,
-          canRequestLoan,
+          canManageKyc: isCollectorRole,
+          canRequestLoan: isCollectorRole && canRequestLoan,
           canSeeLoanSummary: true,
           canEditBorrowerProfile: false,
           canManagePortalAccess: false,
-          canApproveDebtor: false,
-          guidance: buildCollectorGuidance(approvalStatus, kycVerified),
+          canApproveDebtor: session.role === "creditor",
+          guidance: isCollectorRole
+            ? buildCollectorGuidance(approvalStatus, kycVerified)
+            : approvalStatus === "pending_approval"
+              ? "This borrower is waiting for creditor review. You can inspect the account, KYC state, and current loan exposure before deciding."
+              : "This borrower record is active. Review KYC, loan exposure, and collection history from one place.",
         },
       },
       summary: {

@@ -291,127 +291,127 @@ export default function WorkPage() {
     const summary = routeRun?.summary;
 
     return (
-      <div className="space-y-4 pb-4">
-        <section className="mobile-panel-strong px-5 py-5">
+      <div className="space-y-3 pb-4">
+        <section className="mobile-panel-strong px-4 py-4">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="text-[11px] uppercase tracking-[0.18em] text-emerald-700">
+              <p className="mobile-section-label text-emerald-700">
                 {routeRun?.organization?.name || organization?.name || "Collector route run"}
               </p>
-              <h2 className="mt-1 text-xl font-semibold text-[#14213d]">Today&apos;s route runway</h2>
-              <p className="mt-2 text-sm leading-relaxed text-stone-600">
-                Move stop by stop, see which routes need attention first, and jump straight into capture when you&apos;re standing with the debtor.
+              <h2 className="mt-1 text-[1.05rem] font-semibold text-[#0f172a]">Today&apos;s route</h2>
+              <p className="mt-1.5 text-[13px] leading-relaxed text-slate-600">
+                Review stops, see what needs attention, and jump straight into capture.
               </p>
             </div>
             <button
               type="button"
               onClick={() => void loadRouteRun()}
               disabled={loadingRouteRun}
-              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-700 disabled:opacity-45"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[14px] bg-emerald-500/10 text-emerald-700 disabled:opacity-45"
             >
               {loadingRouteRun ? <LoaderCircle size={22} className="animate-spin" /> : <RefreshCw size={22} />}
             </button>
           </div>
 
-          <div className="mt-5 grid grid-cols-2 gap-3">
-            <div className="rounded-[24px] border border-stone-900/8 bg-white/72 px-4 py-4">
-              <p className="text-[10px] uppercase tracking-[0.18em] text-stone-500">Expected today</p>
-              <p className="mt-2 text-lg font-semibold text-[#14213d]">{formatCurrency(summary?.expected || 0)}</p>
-              <p className="mt-2 text-xs text-stone-500">{summary?.routeCount || 0} routes active</p>
+          <div className="mt-4 grid grid-cols-2 gap-2.5">
+            <div className="mobile-stat-tile">
+              <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">Expected today</p>
+              <p className="mt-1.5 text-base font-semibold text-[#0f172a]">{formatCurrency(summary?.expected || 0)}</p>
+              <p className="mt-1.5 text-[11px] text-slate-500">{summary?.routeCount || 0} routes active</p>
             </div>
-            <div className="rounded-[24px] border border-stone-900/8 bg-white/72 px-4 py-4">
-              <p className="text-[10px] uppercase tracking-[0.18em] text-stone-500">Captured</p>
-              <p className="mt-2 text-lg font-semibold text-[#14213d]">{formatCurrency(summary?.collected || 0)}</p>
-              <p className="mt-2 text-xs text-stone-500">{summary?.completedStops || 0} stops closed</p>
+            <div className="mobile-stat-tile">
+              <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">Captured</p>
+              <p className="mt-1.5 text-base font-semibold text-[#0f172a]">{formatCurrency(summary?.collected || 0)}</p>
+              <p className="mt-1.5 text-[11px] text-slate-500">{summary?.completedStops || 0} stops closed</p>
             </div>
-            <div className="rounded-[24px] border border-stone-900/8 bg-white/72 px-4 py-4">
-              <p className="text-[10px] uppercase tracking-[0.18em] text-stone-500">Still open</p>
-              <p className="mt-2 text-lg font-semibold text-[#14213d]">{summary?.pendingStops || 0}</p>
-              <p className="mt-2 text-xs text-stone-500">Need a visit outcome</p>
+            <div className="mobile-stat-tile">
+              <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">Still open</p>
+              <p className="mt-1.5 text-base font-semibold text-[#0f172a]">{summary?.pendingStops || 0}</p>
+              <p className="mt-1.5 text-[11px] text-slate-500">Need a visit outcome</p>
             </div>
-            <div className="rounded-[24px] border border-stone-900/8 bg-white/72 px-4 py-4">
-              <p className="text-[10px] uppercase tracking-[0.18em] text-stone-500">Attention</p>
-              <p className="mt-2 text-lg font-semibold text-[#14213d]">{summary?.attentionStops || 0}</p>
-              <p className="mt-2 text-xs text-stone-500">Overdue or unresolved stops</p>
+            <div className="mobile-stat-tile">
+              <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">Attention</p>
+              <p className="mt-1.5 text-base font-semibold text-[#0f172a]">{summary?.attentionStops || 0}</p>
+              <p className="mt-1.5 text-[11px] text-slate-500">Overdue or unresolved stops</p>
             </div>
           </div>
         </section>
 
         {banner ? (
-          <section className={`mobile-panel px-4 py-4 ${banner.tone === "success" ? "border-emerald-700/12 bg-emerald-500/8" : banner.tone === "warning" ? "border-amber-700/12 bg-amber-500/10" : banner.tone === "danger" ? "border-rose-700/14 bg-rose-500/10" : "border-stone-900/8 bg-white/72"}`}>
+          <section className={`mobile-panel px-4 py-3.5 ${banner.tone === "success" ? "border-emerald-700/12 bg-emerald-500/8" : banner.tone === "warning" ? "border-amber-700/12 bg-amber-500/10" : banner.tone === "danger" ? "border-rose-700/14 bg-rose-500/10" : "border-stone-900/8 bg-white/72"}`}>
             <p className="text-sm leading-relaxed text-stone-800">{banner.text}</p>
           </section>
         ) : null}
 
-        <section className="mobile-panel-ink px-5 py-5 text-white">
-          <p className="text-[11px] uppercase tracking-[0.18em] text-emerald-100/80">Next best stop</p>
-          <h3 className="mt-2 text-2xl font-semibold">{routeRun?.nextStop?.debtorName || "No stop queued yet"}</h3>
-          <p className="mt-2 text-sm text-white/72">
+        <section className="mobile-panel-ink px-4 py-4 text-white">
+          <p className="text-[10px] uppercase tracking-[0.16em] text-emerald-100/80">Next best stop</p>
+          <h3 className="mt-2 text-lg font-semibold">{routeRun?.nextStop?.debtorName || "No stop queued yet"}</h3>
+          <p className="mt-1.5 text-[13px] text-white/72">
             {routeRun?.nextStop
               ? `${routeRun.nextStop.routeName} · ${formatCurrency(routeRun.nextStop.amountDue)} · ${routeRun.nextStop.status.replaceAll("_", " ")}`
               : "As soon as a live collection stop is available, the next best field action will appear here."}
           </p>
-          <div className="mt-5 flex flex-wrap gap-3">
+          <div className="mt-4 grid grid-cols-2 gap-2.5">
             {routeRun?.nextStop ? (
-              <Link href={`/collector?loanId=${routeRun.nextStop.loanId}`} className="inline-flex items-center gap-2 rounded-full bg-[#fff7eb] px-4 py-3 text-sm font-semibold text-[#14213d]">
+              <Link href={`/collector?loanId=${routeRun.nextStop.loanId}`} className="mobile-action-primary bg-white text-[#0f172a]">
                 Open capture
                 <ArrowRight size={16} />
               </Link>
             ) : null}
-            <Link href="/collector" className="inline-flex items-center gap-2 rounded-full border border-white/14 px-4 py-3 text-sm font-semibold text-white/86">
+            <Link href="/collector" className="mobile-action-secondary border border-white/10 bg-white/8 text-white">
               Capture workspace
             </Link>
           </div>
         </section>
 
-        <section className="space-y-3">
+        <section className="space-y-2.5">
           <div className="flex items-center justify-between px-1">
             <div>
-              <p className="text-[11px] uppercase tracking-[0.18em] text-stone-500">Route groups</p>
-              <h3 className="mt-1 text-lg font-semibold text-[#14213d]">Field sequence</h3>
+              <p className="text-[10px] uppercase tracking-[0.16em] text-stone-500">Route groups</p>
+              <h3 className="mt-1 text-base font-semibold text-[#14213d]">Field sequence</h3>
             </div>
           </div>
 
           {loadingRouteRun ? (
             Array.from({ length: 3 }).map((_, index) => (
-              <div key={index} className="mobile-panel px-5 py-5">
+              <div key={index} className="mobile-panel px-4 py-4">
                 <div className="h-4 w-24 animate-pulse rounded-full bg-stone-200" />
                 <div className="mt-3 h-7 w-2/3 animate-pulse rounded-full bg-stone-200" />
                 <div className="mt-4 h-3 w-full animate-pulse rounded-full bg-stone-100" />
               </div>
             ))
           ) : !routeRun || routeRun.routes.length === 0 ? (
-            <section className="mobile-panel px-5 py-6 text-center">
-              <p className="text-base font-semibold text-[#14213d]">No route stops are active right now.</p>
-              <p className="mt-2 text-sm leading-relaxed text-stone-600">
+            <section className="mobile-panel px-4 py-5 text-center">
+              <p className="text-base font-semibold text-[#0f172a]">No route stops are active right now.</p>
+              <p className="mt-2 text-sm leading-relaxed text-slate-600">
                 This route view falls back to live assigned loans, so an empty state here usually means this collector has no active schedule today.
               </p>
             </section>
           ) : (
             routeRun.routes.map((route) => (
-              <section key={route.id} className="mobile-panel px-5 py-5">
+              <section key={route.id} className="mobile-panel px-4 py-4">
                 <div className="flex items-start justify-between gap-4">
                   <div>
-                    <p className="text-[11px] uppercase tracking-[0.18em] text-stone-500">{route.area || "Coverage area"}</p>
-                    <h3 className="mt-1 text-lg font-semibold text-[#14213d]">{route.name}</h3>
-                    <p className="mt-2 text-sm text-stone-600">
+                    <p className="text-[10px] uppercase tracking-[0.16em] text-slate-500">{route.area || "Coverage area"}</p>
+                    <h3 className="mt-1 text-base font-semibold text-[#0f172a]">{route.name}</h3>
+                    <p className="mt-1.5 text-[13px] text-slate-600">
                       {route.pending} open stop{route.pending === 1 ? "" : "s"} · {formatCurrency(route.expected)} expected
                     </p>
                   </div>
                   <StatusPill label={route.attention > 0 ? `${route.attention} attention` : "On track"} tone={route.attention > 0 ? "amber" : "emerald"} />
                 </div>
 
-                <div className="mt-4 space-y-3">
+                <div className="mobile-compact-list mt-3">
                   {route.stops.map((stop) => (
                     <Link
                       key={`${route.id}-${stop.loanId}-${stop.collectionDate}`}
                       href={`/collector?loanId=${stop.loanId}`}
-                      className="block rounded-[24px] border border-stone-900/8 bg-white/72 px-4 py-4 transition-colors hover:bg-white"
+                      className="block rounded-[14px] border border-slate-900/6 bg-slate-50 px-4 py-3.5 transition-colors hover:bg-white"
                     >
                       <div className="flex items-start justify-between gap-4">
                         <div className="min-w-0">
-                          <p className="text-sm font-semibold text-[#14213d]">{stop.debtorName}</p>
-                          <p className="mt-1 text-xs text-stone-500">{stop.loanNumber}</p>
+                          <p className="text-sm font-semibold text-[#0f172a]">{stop.debtorName}</p>
+                          <p className="mt-1 text-xs text-slate-500">{stop.loanNumber}</p>
                         </div>
                         <span className={`rounded-full px-3 py-1 text-[11px] font-semibold capitalize ${
                           stop.overdue
@@ -426,18 +426,18 @@ export default function WorkPage() {
                         </span>
                       </div>
 
-                      <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
+                      <div className="mt-2.5 grid grid-cols-2 gap-3 text-sm">
                         <div>
-                          <p className="text-[10px] uppercase tracking-[0.16em] text-stone-500">Due now</p>
-                          <p className="mt-1 font-semibold text-[#14213d]">{formatCurrency(stop.amountDue)}</p>
+                          <p className="text-[10px] uppercase tracking-[0.16em] text-slate-500">Due now</p>
+                          <p className="mt-1 text-sm font-semibold text-[#0f172a]">{formatCurrency(stop.amountDue)}</p>
                         </div>
                         <div>
-                          <p className="text-[10px] uppercase tracking-[0.16em] text-stone-500">Remaining</p>
-                          <p className="mt-1 font-semibold text-[#14213d]">{formatCurrency(stop.amountRemaining)}</p>
+                          <p className="text-[10px] uppercase tracking-[0.16em] text-slate-500">Remaining</p>
+                          <p className="mt-1 text-sm font-semibold text-[#0f172a]">{formatCurrency(stop.amountRemaining)}</p>
                         </div>
                       </div>
 
-                      <div className="mt-3 flex flex-wrap gap-3 text-xs text-stone-500">
+                      <div className="mt-2.5 flex flex-wrap gap-3 text-xs text-slate-500">
                         {stop.address ? (
                           <span className="inline-flex items-center gap-1.5"><MapPin size={13} />{stop.address}</span>
                         ) : null}
@@ -454,23 +454,23 @@ export default function WorkPage() {
         </section>
 
         {routeRun && routeRun.attention.length > 0 ? (
-          <section className="mobile-panel px-5 py-5">
-            <p className="text-[11px] uppercase tracking-[0.18em] text-stone-500">Attention stack</p>
-            <div className="mt-4 space-y-3">
+          <section className="mobile-panel px-4 py-4">
+            <p className="mobile-section-label">Attention stack</p>
+            <div className="mobile-compact-list mt-3">
               {routeRun.attention.map((item) => (
                 <Link
                   key={`attention-${item.loanId}`}
                   href={`/collector?loanId=${item.loanId}`}
-                  className="block rounded-[22px] border border-stone-900/8 bg-white/72 px-4 py-4"
+                  className="block rounded-[14px] border border-slate-900/6 bg-slate-50 px-4 py-3.5"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div>
-                      <p className="text-sm font-semibold text-[#14213d]">{item.debtorName}</p>
-                      <p className="mt-1 text-xs text-stone-500">{item.routeName}</p>
+                      <p className="text-sm font-semibold text-[#0f172a]">{item.debtorName}</p>
+                      <p className="mt-1 text-xs text-slate-500">{item.routeName}</p>
                     </div>
                     <StatusPill label={item.overdue ? "Overdue" : item.status.replaceAll("_", " ")} tone={item.overdue ? "amber" : "ink"} />
                   </div>
-                  <p className="mt-3 text-sm text-stone-600">
+                  <p className="mt-2.5 text-[13px] text-slate-600">
                     {item.overdue
                       ? `Outstanding attention on ${formatCurrency(item.amountDue)}. Open capture to resolve this stop.`
                       : `This stop is marked ${item.status.replaceAll("_", " ")} and may need another field decision.`}
@@ -486,43 +486,43 @@ export default function WorkPage() {
 
   if (activeRole !== "creditor") {
     return (
-      <div className="space-y-4 pb-4">
-        <section className="mobile-panel px-5 py-5">
+      <div className="space-y-3.5 pb-4">
+        <section className="mobile-panel px-4 py-4">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="text-[11px] uppercase tracking-[0.18em] text-stone-500">Focused workflow</p>
-              <h2 className="mt-1 text-xl font-semibold text-[#14213d]">
+              <p className="mobile-section-label">Focused workflow</p>
+              <h2 className="mt-1 text-lg font-semibold text-[#14213d]">
                 {activeRole === "debtor" ? "Repayment schedule" : "Route runway"}
               </h2>
-              <p className="mt-2 text-sm leading-relaxed text-stone-600">
+              <p className="mt-1.5 text-[13px] leading-relaxed text-stone-600">
                 {activeRole === "debtor"
                   ? "See exactly what is coming next, who will visit, and where each payment stands."
                   : "A cleaner sequence for where to go next, who needs attention, and how much cash should be captured."}
               </p>
             </div>
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-700">
-              {activeRole === "debtor" ? <CheckCircle2 size={22} /> : <Wallet size={22} />}
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[18px] bg-emerald-500/10 text-emerald-700">
+              {activeRole === "debtor" ? <CheckCircle2 size={18} /> : <Wallet size={18} />}
             </div>
           </div>
         </section>
 
-        <section className="space-y-3">
+        <section className="space-y-2.5">
           {focus.map((item, index) => (
-            <div key={item.title} className="mobile-panel-strong px-5 py-5">
+            <div key={item.title} className="mobile-panel-strong px-4 py-4">
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0">
-                  <p className="text-[11px] uppercase tracking-[0.18em] text-stone-500">Step {index + 1}</p>
-                  <h3 className="mt-1 text-lg font-semibold text-[#14213d]">{item.title}</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-stone-600">{item.subtitle}</p>
+                  <p className="text-[10px] uppercase tracking-[0.16em] text-stone-500">Step {index + 1}</p>
+                  <h3 className="mt-1 text-base font-semibold text-[#14213d]">{item.title}</h3>
+                  <p className="mt-1.5 text-[13px] leading-relaxed text-stone-600">{item.subtitle}</p>
                 </div>
                 <StatusPill label={item.status} tone={item.tone} />
               </div>
-              <div className="mt-4 flex items-center justify-between rounded-[22px] bg-stone-900/[0.04] px-4 py-3">
+              <div className="mt-3 flex items-center justify-between rounded-[18px] bg-stone-900/[0.04] px-4 py-2.5">
                 <div>
-                  <p className="text-[11px] uppercase tracking-[0.16em] text-stone-500">Working amount</p>
+                  <p className="text-[10px] uppercase tracking-[0.16em] text-stone-500">Working amount</p>
                   <p className="mt-1 text-base font-semibold text-[#14213d]">{item.displayValue}</p>
                 </div>
-                <button className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#14213d] text-white">
+                <button className="flex h-10 w-10 items-center justify-center rounded-[18px] bg-[#14213d] text-white">
                   <ChevronRight size={18} />
                 </button>
               </div>
@@ -540,55 +540,55 @@ export default function WorkPage() {
   ];
 
   return (
-    <div className="space-y-4 pb-4">
-      <section className="mobile-panel-strong px-5 py-5">
+    <div className="space-y-3 pb-4">
+      <section className="mobile-panel-strong px-4 py-4">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-[11px] uppercase tracking-[0.18em] text-emerald-700">Creditor mobile inbox</p>
-            <h2 className="mt-1 text-xl font-semibold text-[#14213d]">Approval desk</h2>
-            <p className="mt-2 text-sm leading-relaxed text-stone-600">
-              Review collector-submitted debtor records and loan proposals without carrying the full admin dashboard on your phone.
+            <p className="text-[10px] uppercase tracking-[0.16em] text-emerald-700">Creditor mobile inbox</p>
+            <h2 className="mt-1 text-[1.05rem] font-semibold text-[#0f172a]">Approval desk</h2>
+            <p className="mt-1.5 text-[13px] leading-relaxed text-slate-600">
+              Review debtor requests and loan proposals from the field.
             </p>
           </div>
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-700">
-            <ShieldAlert size={22} />
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[14px] bg-emerald-500/10 text-emerald-700">
+            <ShieldAlert size={18} />
           </div>
         </div>
 
-        <div className="mt-5 grid grid-cols-3 gap-3">
+        <div className="mt-4 grid grid-cols-3 gap-2.5">
           {filters.map((filter) => (
             <button
               key={filter.key}
               type="button"
               onClick={() => setSelectedFilter(filter.key)}
-              className={`rounded-[22px] border px-4 py-4 text-left transition-all ${selectedFilter === filter.key ? "border-[#14213d] bg-[#14213d] text-white" : "border-stone-900/8 bg-white/75 text-stone-900"}`}
+              className={`rounded-[14px] border px-3 py-3 text-left transition-all ${selectedFilter === filter.key ? "border-[#0f172a] bg-[#0f172a] text-white" : "border-slate-900/8 bg-slate-50 text-slate-900"}`}
             >
-              <p className={`text-[10px] uppercase tracking-[0.18em] ${selectedFilter === filter.key ? "text-white/60" : "text-stone-500"}`}>{filter.label}</p>
-              <p className="mt-2 text-xl font-semibold">{filter.count}</p>
+              <p className={`text-[10px] uppercase tracking-[0.16em] ${selectedFilter === filter.key ? "text-white/60" : "text-slate-500"}`}>{filter.label}</p>
+              <p className="mt-1.5 text-lg font-semibold">{filter.count}</p>
             </button>
           ))}
         </div>
       </section>
 
       {banner ? (
-        <section className={`mobile-panel px-4 py-4 ${banner.tone === "success" ? "border-emerald-700/12 bg-emerald-500/8" : banner.tone === "warning" ? "border-amber-700/12 bg-amber-500/10" : banner.tone === "danger" ? "border-rose-700/14 bg-rose-500/10" : "border-stone-900/8 bg-white/72"}`}>
+        <section className={`mobile-panel px-4 py-3.5 ${banner.tone === "success" ? "border-emerald-700/12 bg-emerald-500/8" : banner.tone === "warning" ? "border-amber-700/12 bg-amber-500/10" : banner.tone === "danger" ? "border-rose-700/14 bg-rose-500/10" : "border-stone-900/8 bg-white/72"}`}>
           <p className="text-sm leading-relaxed text-stone-800">{banner.text}</p>
         </section>
       ) : null}
 
-      <section className="space-y-3">
+      <section className="space-y-2.5">
         {loadingApprovals ? (
           Array.from({ length: 3 }).map((_, index) => (
-            <div key={index} className="mobile-panel px-5 py-5">
+            <div key={index} className="mobile-panel px-4 py-4">
               <div className="h-4 w-24 animate-pulse rounded-full bg-stone-200" />
               <div className="mt-3 h-7 w-2/3 animate-pulse rounded-full bg-stone-200" />
               <div className="mt-3 h-3 w-full animate-pulse rounded-full bg-stone-100" />
             </div>
           ))
         ) : filteredItems.length === 0 ? (
-          <section className="mobile-panel px-5 py-6 text-center">
-            <p className="text-base font-semibold text-[#14213d]">No approvals are waiting right now.</p>
-            <p className="mt-2 text-sm leading-relaxed text-stone-600">
+          <section className="mobile-panel px-4 py-5 text-center">
+            <p className="text-base font-semibold text-[#0f172a]">No approvals are waiting right now.</p>
+            <p className="mt-2 text-sm leading-relaxed text-slate-600">
               Once collectors submit new debtor records or loan proposals, they will appear here automatically.
             </p>
           </section>
@@ -600,18 +600,18 @@ export default function WorkPage() {
                 key={`${item.kind}-${item.id}`}
                 type="button"
                 onClick={() => setSelectedApprovalId(item.id)}
-                className={`w-full rounded-[28px] border px-5 py-5 text-left transition-all ${active ? "border-[#14213d] bg-[#14213d] text-white shadow-[0_24px_50px_rgba(20,33,61,0.22)]" : "mobile-panel-strong"}`}
+                className={`w-full rounded-[16px] border px-4 py-4 text-left transition-all ${active ? "border-[#0f172a] bg-[#0f172a] text-white shadow-[0_18px_36px_rgba(15,23,42,0.16)]" : "mobile-panel-strong"}`}
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0">
-                    <p className={`text-[11px] uppercase tracking-[0.18em] ${active ? "text-white/60" : "text-stone-500"}`}>{item.badge}</p>
-                    <h3 className="mt-1 text-lg font-semibold">{item.title}</h3>
-                    <p className={`mt-2 text-sm leading-relaxed ${active ? "text-white/72" : "text-stone-600"}`}>{item.subtitle}</p>
+                    <p className={`text-[10px] uppercase tracking-[0.16em] ${active ? "text-white/60" : "text-slate-500"}`}>{item.badge}</p>
+                    <h3 className="mt-1 text-base font-semibold">{item.title}</h3>
+                    <p className={`mt-1.5 text-[13px] leading-relaxed ${active ? "text-white/72" : "text-slate-600"}`}>{item.subtitle}</p>
                   </div>
                   <StatusPill label="Pending" tone={active ? "slate" : item.kind === "loan" ? "amber" : "ink"} />
                 </div>
 
-                <div className={`mt-4 flex flex-wrap gap-3 text-xs ${active ? "text-white/70" : "text-stone-500"}`}>
+                <div className={`mt-3 flex flex-wrap gap-3 text-xs ${active ? "text-white/70" : "text-slate-500"}`}>
                   <span>{getRequesterLabel(item)}</span>
                   <span>{formatDate(item.requestedAt)}</span>
                 </div>
@@ -626,7 +626,7 @@ export default function WorkPage() {
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="text-[11px] uppercase tracking-[0.18em] text-emerald-100/80">Decision panel</p>
-              <h3 className="mt-1 text-2xl font-semibold">{selectedApproval.title}</h3>
+              <h3 className="mt-1 text-[1.35rem] font-semibold">{selectedApproval.title}</h3>
               <p className="mt-2 text-sm text-white/72">{selectedApproval.subtitle}</p>
             </div>
             <StatusPill label={selectedApproval.kind === "loan" ? "Loan" : "Debtor"} tone="slate" />
@@ -634,14 +634,14 @@ export default function WorkPage() {
 
           <div className="mt-5 grid gap-3">
             {selectedApproval.metrics.map((metric) => (
-              <div key={`${selectedApproval.id}-${metric.label}`} className="rounded-[22px] border border-white/10 bg-white/8 px-4 py-4">
+              <div key={`${selectedApproval.id}-${metric.label}`} className="rounded-[16px] border border-white/10 bg-white/8 px-4 py-4">
                 <p className="text-[10px] uppercase tracking-[0.16em] text-white/58">{metric.label}</p>
                 <p className="mt-2 text-base font-semibold text-white">{metric.value}</p>
               </div>
             ))}
           </div>
 
-          <div className="mt-5 rounded-[24px] border border-white/10 bg-white/8 px-4 py-4">
+          <div className="mt-5 rounded-[16px] border border-white/10 bg-white/8 px-4 py-4">
             <p className="inline-flex items-center gap-2 text-sm font-semibold text-white"><MessageSquareQuote size={16} />Approval note</p>
             <p className="mt-2 text-xs text-white/58">
               Use this for context, rejection reasons, or anything the collector should see when the request is reviewed.
@@ -650,7 +650,7 @@ export default function WorkPage() {
               value={note}
               onChange={(event) => setNote(event.target.value)}
               rows={4}
-              className="mt-3 w-full rounded-[20px] border border-white/10 bg-white/10 px-4 py-3 text-sm text-white outline-none placeholder:text-white/38"
+              className="mt-3 w-full rounded-[14px] border border-white/10 bg-white/10 px-4 py-3 text-sm text-white outline-none placeholder:text-white/38"
               placeholder={selectedApproval.kind === "loan" ? "Add approval context or explain what needs to change." : "Explain any correction the collector should make before resubmitting."}
             />
           </div>
@@ -660,7 +660,7 @@ export default function WorkPage() {
               type="button"
               onClick={() => void handleDecision("reject")}
               disabled={acting}
-              className="rounded-[24px] border border-white/16 bg-white/6 px-4 py-4 text-sm font-semibold text-white disabled:opacity-45"
+              className="rounded-[14px] border border-white/16 bg-white/6 px-4 py-4 text-sm font-semibold text-white disabled:opacity-45"
             >
               {acting ? <LoaderCircle size={18} className="mx-auto animate-spin" /> : "Reject"}
             </button>
@@ -668,7 +668,7 @@ export default function WorkPage() {
               type="button"
               onClick={() => void handleDecision("approve")}
               disabled={acting}
-              className="rounded-[24px] bg-[#fff7eb] px-4 py-4 text-sm font-semibold text-[#14213d] disabled:opacity-45"
+              className="rounded-[14px] bg-white px-4 py-4 text-sm font-semibold text-[#0f172a] disabled:opacity-45"
             >
               {acting ? <LoaderCircle size={18} className="mx-auto animate-spin" /> : "Approve"}
             </button>

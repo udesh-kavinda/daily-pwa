@@ -43,11 +43,27 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   );
 
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="Daily+ Mobile" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function () {
+                try {
+                  var stored = localStorage.getItem('daily-pwa-theme');
+                  var theme = stored === 'light' || stored === 'dark'
+                    ? stored
+                    : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+                  if (theme === 'dark') document.documentElement.classList.add('dark');
+                  else document.documentElement.classList.remove('dark');
+                } catch (e) {}
+              })();
+            `,
+          }}
+        />
       </head>
       <body className="mobile-noise antialiased">
         {clerkConfigured ? <ClerkProvider>{children}</ClerkProvider> : children}

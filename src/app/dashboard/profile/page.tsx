@@ -7,6 +7,7 @@ import { useUserStore } from "@/store/user-store";
 import { fetchJson } from "@/lib/fetch-json";
 import { formatLkr, getRoleLabel, profileByRole } from "@/lib/mobile-demo-data";
 import type { MobileRole } from "@/lib/mobile-demo-data";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 const ClerkLogoutButton = dynamic(
   () => import("@/components/auth/clerk-logout-button").then((module) => module.ClerkLogoutButton),
@@ -152,37 +153,44 @@ export default function ProfilePage() {
   const headline = data?.profile ? `${data.profile.first_name} ${data.profile.last_name}`.trim() : `${getRoleLabel(activeRole)} mode`;
 
   return (
-    <div className="space-y-4 pb-4">
-      <section className="mobile-panel-ink px-5 py-5">
-        <p className="text-[11px] uppercase tracking-[0.18em] text-emerald-100/80">Identity</p>
-        <div className="mt-3 flex items-center gap-4">
-          <div className="flex h-16 w-16 items-center justify-center rounded-[24px] bg-white/12 text-lg font-semibold text-white">
-            {initials}
+    <div className="space-y-3 pb-4">
+      <section className="mobile-panel px-4 py-4">
+        <p className="mobile-section-label">Identity</p>
+        <div className="mt-3 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="mobile-solid-surface flex h-14 w-14 items-center justify-center rounded-[16px] text-lg font-semibold">
+              {initials}
+            </div>
+            <div>
+              <h2 className="mobile-text-primary text-[1.15rem] font-semibold leading-none">{headline}</h2>
+              <p className="mobile-text-secondary mt-1 text-[13px]">{data?.organization?.name || "Daily+ Mobile workspace"}</p>
+              <div className="mt-2 inline-flex rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 dark:bg-emerald-500/14 dark:text-emerald-300">
+                {getRoleLabel(activeRole)}
+              </div>
+            </div>
           </div>
-          <div>
-            <h2 className="mobile-title text-[2rem] leading-none text-white">{headline}</h2>
-            <p className="mt-2 text-sm text-white/72">
-              {data?.organization?.name || "Daily+ Mobile workspace"}
-            </p>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <ClerkLogoutButton compact />
           </div>
         </div>
       </section>
 
       {groups.map((group) => (
-        <section key={group.title} className="mobile-panel px-5 py-5">
-          <h3 className="text-lg font-semibold text-[#14213d]">{group.title}</h3>
-          <div className="mt-4 space-y-3">
+        <section key={group.title} className="mobile-panel px-4 py-4">
+          <h3 className="mobile-text-primary text-base font-semibold">{group.title}</h3>
+          <div className="mobile-compact-list mt-3">
             {group.items.map((item) => (
-              <div key={`${group.title}-${item.label}`} className="flex items-center justify-between gap-4 rounded-[22px] bg-white/70 px-4 py-4">
-                <span className="text-sm text-stone-500">{item.label}</span>
-                <span className="text-sm font-semibold text-[#14213d] text-right">{item.value}</span>
+              <div key={`${group.title}-${item.label}`} className="mobile-row">
+                <span className="mobile-text-secondary text-sm">{item.label}</span>
+                <span className="mobile-text-primary text-sm font-semibold text-right">{item.value}</span>
               </div>
             ))}
           </div>
         </section>
       ))}
 
-      <section className="grid gap-3">
+      <section className="grid gap-2.5">
         {[
           { title: "Notifications", detail: "Receipts, reminders, and route alerts", icon: BellRing },
           { title: "Security", detail: "Clerk identity backed by the same Daily+ organization rules", icon: ShieldCheck },
@@ -191,32 +199,17 @@ export default function ProfilePage() {
         ].map((item) => {
           const Icon = item.icon;
           return (
-            <div key={item.title} className="mobile-panel-strong flex items-start gap-4 px-5 py-5">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-700">
-                <Icon size={22} />
+            <div key={item.title} className="mobile-panel-strong flex items-start gap-3 px-4 py-4">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[14px] bg-emerald-500/10 text-emerald-700 dark:bg-emerald-500/14 dark:text-emerald-300">
+                <Icon size={18} />
               </div>
               <div>
-                <h4 className="text-base font-semibold text-[#14213d]">{item.title}</h4>
-                <p className="mt-1 text-sm text-stone-600">{item.detail}</p>
+                <h4 className="mobile-text-primary text-sm font-semibold">{item.title}</h4>
+                <p className="mobile-text-secondary mt-1 text-[13px]">{item.detail}</p>
               </div>
             </div>
           );
         })}
-      </section>
-
-      <section className="mobile-panel px-5 py-5">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <p className="text-[11px] uppercase tracking-[0.18em] text-stone-500">Session</p>
-            <h3 className="mt-1 text-lg font-semibold text-[#14213d]">Log out of Daily+ Mobile</h3>
-            <p className="mt-2 text-sm text-stone-600">
-              End this session on the current device and return to the sign-in screen.
-            </p>
-          </div>
-          <ClerkLogoutButton compact />
-        </div>
-
-        <ClerkLogoutButton />
       </section>
     </div>
   );

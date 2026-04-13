@@ -171,7 +171,7 @@ export default function CollectorDebtorDetailPage() {
         <section className="mobile-panel px-5 py-6 text-center">
           <p className="text-base font-semibold text-[#14213d]">Debtor detail is unavailable.</p>
           <p className="mt-2 text-sm leading-relaxed text-stone-600">{error || "This debtor could not be loaded for the collector."}</p>
-          <Link href="/dashboard/portfolio" className="mt-4 inline-flex items-center gap-2 rounded-full bg-[#14213d] px-4 py-3 text-sm font-semibold text-white">
+          <Link href="/dashboard/debtors" className="mt-4 inline-flex items-center gap-2 rounded-full bg-[#14213d] px-4 py-3 text-sm font-semibold text-white">
             <ArrowLeft size={16} />
             Back to debtors
           </Link>
@@ -183,7 +183,7 @@ export default function CollectorDebtorDetailPage() {
   return (
     <div className="space-y-4 pb-4">
       <section className="mobile-panel-ink px-5 py-5 text-white">
-        <Link href="/dashboard/portfolio" className="inline-flex items-center gap-2 text-sm font-semibold text-white/72">
+        <Link href="/dashboard/debtors" className="inline-flex items-center gap-2 text-sm font-semibold text-white/72">
           <ArrowLeft size={16} />
           Back to debtors
         </Link>

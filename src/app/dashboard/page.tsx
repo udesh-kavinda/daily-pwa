@@ -2,13 +2,13 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowRight, CalendarClock, ShieldCheck, Wallet, Waves } from "lucide-react";
+import { ArrowRight, CalendarClock, FolderKanban, Route, ShieldCheck, Users, Wallet, Waves } from "lucide-react";
 import { StatusPill } from "@/components/status-pill";
 import { useUserStore } from "@/store/user-store";
 import { activityFeed, getRoleLabel, heroCopy, homeMetrics, workQueue } from "@/lib/mobile-demo-data";
 import { fetchJson } from "@/lib/fetch-json";
 import type { MobileRole } from "@/lib/mobile-demo-data";
-import { getMobilePrimaryActionPath, getMobileSecondaryActionPath, normalizeMobileRole } from "@/lib/mobile-route-access";
+import { normalizeMobileRole } from "@/lib/mobile-route-access";
 
 type OverviewResponse = {
   role: MobileRole;
@@ -99,8 +99,6 @@ export default function DashboardPage() {
   const metrics = liveData?.overview.metrics || fallbackMetrics;
   const focus = liveData?.overview.focus || fallbackFocus;
   const activity = liveData?.overview.activity || fallbackActivity;
-  const primaryActionHref = getMobilePrimaryActionPath(role);
-  const secondaryActionHref = getMobileSecondaryActionPath(role);
 
   const heroIcon = useMemo(() => {
     if (activeRole === "creditor") return <ShieldCheck size={22} />;
@@ -108,103 +106,136 @@ export default function DashboardPage() {
     return <Wallet size={22} />;
   }, [activeRole]);
 
+  const sections = useMemo(() => {
+    if (activeRole === "creditor") {
+      return [
+        { href: "/dashboard/work", title: "Approvals", detail: "Review debtor and loan requests", icon: ShieldCheck },
+        { href: "/dashboard/debtors", title: "Debtors", detail: "Open borrower list", icon: FolderKanban },
+        { href: "/dashboard/loans", title: "Loans", detail: "Open loan table", icon: Wallet },
+        { href: "/dashboard/routes", title: "Routes", detail: "Review coverage and assignments", icon: Route },
+        { href: "/dashboard/collectors", title: "Collectors", detail: "Open field team list", icon: Users },
+      ];
+    }
+
+    if (activeRole === "collector") {
+      return [
+        { href: "/dashboard/work", title: "Routes", detail: "Open today’s route sequence", icon: Route },
+        { href: "/dashboard/debtors", title: "Debtors", detail: "Open assigned debtor list", icon: FolderKanban },
+        { href: "/collector", title: "Capture", detail: "Record a field collection", icon: Wallet },
+      ];
+    }
+
+    return [
+      { href: "/dashboard/work", title: "Schedule", detail: "See upcoming repayment activity", icon: CalendarClock },
+      { href: "/dashboard/loans", title: "Loans", detail: "Open your loan table", icon: Wallet },
+      { href: "/dashboard/notifications", title: "Alerts", detail: "See reminders and notices", icon: ShieldCheck },
+    ];
+  }, [activeRole]);
+
   return (
-    <div className="space-y-4 pb-4">
+    <div className="space-y-3 pb-4">
       {unavailable ? (
-        <section className="mobile-panel border border-amber-400/40 bg-amber-50 px-4 py-4 text-sm text-amber-900">
-          Live backend data is temporarily unavailable. The mobile shell is still here, but some values are falling back to preview content.
+        <section className="mobile-panel border border-amber-300/60 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          Live data is temporarily unavailable, so some values are showing fallback content.
         </section>
       ) : null}
 
-      <section className="mobile-panel-ink px-5 py-5">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <span className="mobile-kicker bg-white/10 text-emerald-100">{hero.eyebrow}</span>
-            <h2 className="mobile-title mt-4 text-[2rem] leading-[0.94] text-white">{hero.title}</h2>
-            <p className="mt-3 text-sm leading-relaxed text-white/72">{hero.summary}</p>
-          </div>
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/10 text-white">
-            {heroIcon}
-          </div>
-        </div>
-
-        <div className="mt-5 flex gap-3 overflow-x-auto pb-1 soft-scroll">
-          <Link href={primaryActionHref} className="shrink-0 rounded-full bg-[#fff7eb] px-4 py-3 text-sm font-semibold text-[#14213d]">
-            {hero.primaryAction}
-          </Link>
-          <Link href={secondaryActionHref} className="shrink-0 rounded-full border border-white/12 px-4 py-3 text-sm font-semibold text-white/90">
-            {hero.secondaryAction}
-          </Link>
-        </div>
-      </section>
-
-      <section className="grid gap-3">
+      <section className="grid grid-cols-2 gap-2.5">
         {isLoading && !liveData
-          ? Array.from({ length: 3 }).map((_, index) => (
-              <div key={index} className="mobile-panel h-[108px] animate-pulse bg-white/70" />
+          ? Array.from({ length: 4 }).map((_, index) => (
+              <div key={index} className="mobile-panel h-[88px] animate-pulse bg-white/70" />
             ))
           : metrics.map((metric) => (
-              <div key={metric.label} className={`mobile-panel px-4 py-4 ${metric.tone === "emerald" ? "metric-emerald" : metric.tone === "amber" ? "metric-amber" : "metric-ink"}`}>
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className="text-[11px] uppercase tracking-[0.18em] text-stone-500">{metric.label}</p>
-                    <p className="mt-2 text-[1.7rem] font-semibold leading-none text-[#14213d]">{metric.displayValue}</p>
-                  </div>
-                  <StatusPill label={metric.change} tone={metric.tone === "ink" ? "ink" : metric.tone} />
-                </div>
+              <div key={metric.label} className={`mobile-stat-tile ${metric.tone === "emerald" ? "metric-emerald" : metric.tone === "amber" ? "metric-amber" : "metric-ink"}`}>
+                <p className="mobile-text-tertiary text-[10px] uppercase tracking-[0.16em]">{metric.label}</p>
+                <p className="mobile-text-primary mt-1.5 text-[1.1rem] font-semibold leading-tight">{metric.displayValue}</p>
+                <p className="mobile-text-secondary mt-1.5 text-[11px] leading-snug">{metric.change}</p>
               </div>
             ))}
       </section>
 
-      <section className="mobile-panel px-5 py-5">
+      <section className="mobile-panel px-4 py-4">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-[11px] uppercase tracking-[0.18em] text-stone-500">Active focus</p>
-            <h3 className="mt-1 text-lg font-semibold text-[#14213d]">{getRoleLabel(activeRole)} priorities</h3>
+            <p className="mobile-section-label">Quick access</p>
+            <h3 className="mobile-text-primary mt-1 text-[1rem] font-semibold">{getRoleLabel(activeRole)} sections</h3>
+          </div>
+          <div className="flex h-9 w-9 items-center justify-center rounded-[14px] bg-emerald-500/10 text-emerald-700 dark:bg-emerald-500/14 dark:text-emerald-300">
+            {heroIcon}
+          </div>
+        </div>
+
+        <div className="mobile-compact-list mt-3">
+          {sections.map((section) => {
+            const Icon = section.icon;
+            return (
+              <Link key={section.href} href={section.href} className="mobile-row">
+                <div className="flex items-center gap-3">
+                  <div className="mobile-icon-surface flex h-10 w-10 items-center justify-center rounded-[12px]">
+                    <Icon size={18} />
+                  </div>
+                  <div>
+                    <p className="mobile-text-primary text-sm font-semibold">{section.title}</p>
+                    <p className="mobile-text-secondary mt-1 text-[13px]">{section.detail}</p>
+                  </div>
+                </div>
+                <ArrowRight size={16} className="mobile-text-tertiary shrink-0" />
+              </Link>
+            );
+          })}
+        </div>
+      </section>
+
+      <section className="mobile-panel px-4 py-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="mobile-section-label">Active focus</p>
+            <h3 className="mobile-text-primary mt-1 text-[1rem] font-semibold">{hero.eyebrow}</h3>
           </div>
           <StatusPill label="Live" tone="slate" />
         </div>
 
-        <div className="mt-4 space-y-3">
+        <div className="mobile-compact-list mt-3">
           {focus.map((task) => (
-            <div key={task.title} className="rounded-[24px] border border-stone-900/8 bg-white/70 px-4 py-4">
+            <div key={task.title} className="mobile-row block">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <h4 className="text-sm font-semibold text-[#14213d]">{task.title}</h4>
-                  <p className="mt-1 text-sm leading-relaxed text-stone-600">{task.subtitle}</p>
+                  <h4 className="mobile-text-primary text-sm font-semibold">{task.title}</h4>
+                  <p className="mobile-text-secondary mt-1 text-[13px] leading-relaxed">{task.subtitle}</p>
                 </div>
                 <StatusPill tone={task.tone} label={task.status} />
               </div>
-              <div className="mt-3 flex items-center justify-between border-t border-stone-900/6 pt-3">
-                <span className="text-[11px] uppercase tracking-[0.16em] text-stone-500">Value</span>
-                <span className="text-base font-semibold text-[#14213d]">{task.displayValue}</span>
+              <div className="mt-3 flex items-center justify-between border-t border-slate-900/6 pt-3">
+                <span className="mobile-text-tertiary text-[11px] uppercase tracking-[0.16em]">Current value</span>
+                <span className="mobile-text-primary text-sm font-semibold">{task.displayValue}</span>
               </div>
             </div>
           ))}
         </div>
       </section>
 
-      <section className="mobile-panel px-5 py-5">
+      <section className="mobile-panel px-4 py-4">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-[11px] uppercase tracking-[0.18em] text-stone-500">Live feed</p>
-            <h3 className="mt-1 text-lg font-semibold text-[#14213d]">Operational updates</h3>
+            <p className="mobile-section-label">Live feed</p>
+            <h3 className="mobile-text-primary mt-1 text-[1rem] font-semibold">Operational updates</h3>
           </div>
           <Waves size={18} className="text-emerald-700" />
         </div>
 
-        <div className="mt-4 space-y-4">
+        <div className="mobile-compact-list mt-3">
           {activity.map((item) => (
-            <div key={`${item.title}-${item.time}`} className="relative pl-5">
-              <span className="absolute left-0 top-1.5 h-2.5 w-2.5 rounded-full bg-emerald-600" />
-              <p className="text-sm font-semibold text-[#14213d]">{item.title}</p>
-              <p className="mt-1 text-sm leading-relaxed text-stone-600">{item.detail}</p>
-              <p className="mt-1 text-[11px] uppercase tracking-[0.16em] text-stone-500">{item.time}</p>
+            <div key={`${item.title}-${item.time}`} className="mobile-row block">
+              <div className="flex items-start justify-between gap-3">
+                <p className="mobile-text-primary text-sm font-semibold">{item.title}</p>
+                <span className="mobile-text-tertiary text-[11px] uppercase tracking-[0.16em]">{item.time}</span>
+              </div>
+              <p className="mobile-text-secondary mt-1 text-[13px] leading-relaxed">{item.detail}</p>
             </div>
           ))}
         </div>
 
-        <Link href="/dashboard/portfolio" className="mt-5 flex items-center justify-between rounded-[22px] bg-stone-900 px-4 py-4 text-sm font-semibold text-white">
+        <Link href="/dashboard/portfolio" className="mobile-solid-surface mt-4 flex items-center justify-between rounded-[14px] px-4 py-3 text-sm font-semibold">
           Open detailed portfolio
           <ArrowRight size={18} />
         </Link>

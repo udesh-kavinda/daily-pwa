@@ -3,27 +3,30 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
-import { Bell, Building2, LoaderCircle } from "lucide-react";
+import { Bell, LoaderCircle } from "lucide-react";
 import { EnsureUser } from "@/components/auth/ensure-user";
 import { InstallBanner } from "@/components/install-banner";
 import { BottomNav } from "@/components/bottom-nav";
 import { useUserStore } from "@/store/user-store";
 import { fetchJson } from "@/lib/fetch-json";
-import { getRoleLabel } from "@/lib/mobile-demo-data";
 
 const titleByPath: Record<string, { title: string; subtitle: string }> = {
-  "/dashboard": { title: "Command center", subtitle: "A polished mobile layer on top of the Daily+ backend" },
-  "/dashboard/work": { title: "Workstream", subtitle: "What needs attention next, with role-aware mobile clarity" },
-  "/dashboard/notifications": { title: "Notifications", subtitle: "Alerts, approvals, reminders, and operational updates in one mobile inbox" },
-  "/dashboard/portfolio": { title: "Portfolio", subtitle: "People, balances, and borrower relationships in motion" },
-  "/dashboard/profile": { title: "Profile", subtitle: "Identity, organization context, and operational readiness" },
-  "/dashboard/onboarding/collector": { title: "Collector setup", subtitle: "Confirm your details and join the organization" },
-  "/dashboard/onboarding/debtor": { title: "Portal setup", subtitle: "Confirm your details and unlock your loan space" },
+  "/dashboard": { title: "Overview", subtitle: "Today’s essentials" },
+  "/dashboard/work": { title: "Work", subtitle: "What needs action next" },
+  "/dashboard/notifications": { title: "Notifications", subtitle: "Alerts and reminders" },
+  "/dashboard/portfolio": { title: "Records", subtitle: "Open the section you need" },
+  "/dashboard/debtors": { title: "Debtors", subtitle: "Borrower list" },
+  "/dashboard/loans": { title: "Loans", subtitle: "Loan list" },
+  "/dashboard/routes": { title: "Routes", subtitle: "Route list" },
+  "/dashboard/collectors": { title: "Collectors", subtitle: "Field team list" },
+  "/dashboard/profile": { title: "Profile", subtitle: "Account and workspace" },
+  "/dashboard/onboarding/collector": { title: "Collector setup", subtitle: "Confirm your details" },
+  "/dashboard/onboarding/debtor": { title: "Portal setup", subtitle: "Confirm your details" },
 };
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { role, user, organization, isLoading } = useUserStore();
+  const { isLoading } = useUserStore();
   const [unreadCount, setUnreadCount] = useState(0);
 
   const title = useMemo(() => {
@@ -31,6 +34,30 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       return {
         title: "New debtor request",
         subtitle: "Capture a clean field profile and submit it for creditor approval",
+      };
+    }
+    if (pathname.startsWith("/dashboard/collectors/")) {
+      return {
+        title: "Collector detail",
+        subtitle: "Field team profile, assignment summary, and route coverage",
+      };
+    }
+    if (pathname.startsWith("/dashboard/routes/")) {
+      return {
+        title: "Route detail",
+        subtitle: "Coverage, assigned collector, and debtors mapped to this route",
+      };
+    }
+    if (pathname.startsWith("/dashboard/loans/")) {
+      return {
+        title: "Loan detail",
+        subtitle: "Balance, repayment activity, and who is managing the loan",
+      };
+    }
+    if (pathname.startsWith("/dashboard/debtors/")) {
+      return {
+        title: "Debtor detail",
+        subtitle: "Borrower profile, KYC state, and loan exposure in one place",
       };
     }
     if (pathname.includes("/dashboard/portfolio/debtors/") && pathname.endsWith("/kyc")) {
@@ -66,9 +93,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     return titleByPath[pathname] || { title: "Daily+ Mobile", subtitle: "Field-ready finance experience" };
   }, [pathname]);
 
-  const roleLabel = role ? getRoleLabel(role === "recovery_agent" ? "collector" : role) : "Workspace";
-  const userName = `${user?.first_name || ""} ${user?.last_name || ""}`.trim() || "Daily+ member";
-
   useEffect(() => {
     let mounted = true;
 
@@ -99,15 +123,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <div className="min-h-screen pb-28 text-stone-900">
       <EnsureUser />
-      <header className="sticky top-0 z-30 px-3 pb-4 pt-[calc(env(safe-area-inset-top)+0.75rem)]">
-        <div className="mobile-shell mobile-glass rounded-[30px] px-4 py-4">
-          <div className="flex items-start justify-between gap-4">
+      <header className="sticky top-0 z-30 px-3 pb-2 pt-[calc(env(safe-area-inset-top)+0.6rem)]">
+        <div className="mobile-shell mobile-glass rounded-[16px] px-4 py-3">
+          <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-emerald-700">Daily+ Mobile</p>
-              <h1 className="mobile-title mt-1 text-[1.75rem] leading-none text-[#14213d]">{title.title}</h1>
-              <p className="mt-2 text-sm text-stone-600">{title.subtitle}</p>
+              <h1 className="mobile-text-primary text-[1rem] font-semibold leading-none">{title.title}</h1>
+              <p className="mobile-text-secondary mt-1 text-[11px]">{title.subtitle}</p>
             </div>
-            <Link href="/dashboard/notifications" className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-stone-900/10 bg-white/70 text-stone-700">
+            <Link href="/dashboard/notifications" className="mobile-surface-muted mobile-text-secondary relative flex h-10 w-10 shrink-0 items-center justify-center rounded-[14px] border border-slate-900/8 dark:border-white/10">
               {isLoading ? <LoaderCircle size={18} className="animate-spin" /> : <Bell size={18} />}
               {unreadCount > 0 ? (
                 <span className="absolute -right-1 -top-1 inline-flex min-h-[1.15rem] min-w-[1.15rem] items-center justify-center rounded-full bg-emerald-600 px-1 text-[10px] font-semibold text-white">
@@ -116,27 +139,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               ) : null}
             </Link>
           </div>
-
-          <div className="mt-4 flex items-center justify-between rounded-2xl border border-stone-900/8 bg-white/60 px-3 py-3">
-            <div className="min-w-0">
-              <p className="text-[10px] uppercase tracking-[0.18em] text-stone-500">Signed in as</p>
-              <p className="truncate text-sm font-semibold text-stone-900">{userName}</p>
-              <p className="truncate text-xs text-stone-500">{roleLabel}</p>
-            </div>
-            <div className="rounded-[20px] border border-stone-900/8 bg-[#fffdf8] px-3 py-2 text-right">
-              <div className="inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.18em] text-stone-500">
-                <Building2 size={12} />
-                Workspace
-              </div>
-              <p className="mt-1 max-w-[11rem] truncate text-sm font-semibold text-stone-900">
-                {organization?.name || "Loading organization"}
-              </p>
-            </div>
-          </div>
         </div>
       </header>
 
-      <main className="mobile-shell px-3">{children}</main>
+      <main className="mobile-shell px-3 pb-2">{children}</main>
       <BottomNav />
       <InstallBanner />
     </div>

@@ -20,7 +20,7 @@ export function ClerkLogoutButton({ compact = false }: ClerkLogoutButtonProps) {
         type="button"
         onClick={() => void handleSignOut()}
         disabled={!loaded}
-        className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#14213d] text-white disabled:opacity-45"
+        className="mobile-solid-surface flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] disabled:opacity-45"
         aria-label="Log out"
       >
         {loaded ? <LogOut size={20} /> : <LoaderCircle size={20} className="animate-spin" />}
@@ -33,7 +33,7 @@ export function ClerkLogoutButton({ compact = false }: ClerkLogoutButtonProps) {
       type="button"
       onClick={() => void handleSignOut()}
       disabled={!loaded}
-      className="mt-4 flex w-full items-center justify-center gap-2 rounded-[24px] border border-stone-900/10 bg-white/80 px-4 py-4 text-sm font-semibold text-[#14213d] disabled:opacity-45"
+      className="mobile-solid-surface mt-4 flex w-full items-center justify-center gap-2 rounded-[14px] px-4 py-3.5 text-sm font-semibold disabled:opacity-45"
     >
       {loaded ? <LogOut size={18} /> : <LoaderCircle size={18} className="animate-spin" />}
       Log out

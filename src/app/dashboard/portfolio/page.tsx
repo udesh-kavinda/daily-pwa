@@ -1,147 +1,62 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { ChevronRight, Search, Sparkle, Users } from "lucide-react";
-import { StatusPill } from "@/components/status-pill";
+import type { ComponentType } from "react";
+import { ChevronRight, FolderKanban, Route, Users, Wallet } from "lucide-react";
 import { useUserStore } from "@/store/user-store";
-import { fetchJson } from "@/lib/fetch-json";
-import { portfolioCards } from "@/lib/mobile-demo-data";
 import type { MobileRole } from "@/lib/mobile-demo-data";
 
-type PortfolioResponse = {
-  role: MobileRole;
-  items: Array<{
-    id: string;
-    title: string;
-    subtitle: string;
-    meta: string;
-    value: number;
-    displayValue: string;
-    tone: "emerald" | "amber" | "ink";
-  }>;
+type DirectoryItem = {
+  href: string;
+  title: string;
+  detail: string;
+  icon: ComponentType<{ size?: number; className?: string }>;
 };
 
 export default function PortfolioPage() {
   const { role } = useUserStore();
   const activeRole: MobileRole = role === "creditor" || role === "debtor" ? role : "collector";
-  const [items, setItems] = useState<PortfolioResponse["items"]>([]);
 
-  useEffect(() => {
-    let mounted = true;
-
-    fetchJson<PortfolioResponse>("/api/mobile/portfolio")
-      .then((payload) => {
-        if (mounted) {
-          setItems(payload.items);
-        }
-      })
-      .catch(() => {
-        if (mounted) {
-          setItems(
-            portfolioCards[activeRole].map((card, index) => ({
-              id: `${activeRole}-${index}`,
-              title: card.title,
-              subtitle: card.subtitle,
-              meta: card.meta,
-              value: Number(String(card.value).replace(/[^\d.-]/g, "")) || 0,
-              displayValue: card.value,
-              tone: card.tone,
-            }))
-          );
-        }
-      });
-
-    return () => {
-      mounted = false;
-    };
-  }, [activeRole]);
+  const items: DirectoryItem[] = activeRole === "creditor"
+    ? [
+        { href: "/dashboard/debtors", title: "Debtors", detail: "Open borrower records", icon: FolderKanban },
+        { href: "/dashboard/loans", title: "Loans", detail: "Open the loan table", icon: Wallet },
+        { href: "/dashboard/routes", title: "Routes", detail: "Open route list", icon: Route },
+        { href: "/dashboard/collectors", title: "Collectors", detail: "Open field team list", icon: Users },
+      ]
+    : activeRole === "collector"
+      ? [
+          { href: "/dashboard/debtors", title: "Debtors", detail: "Open assigned debtor list", icon: FolderKanban },
+          { href: "/dashboard/routes", title: "Routes", detail: "Open route list", icon: Route },
+          { href: "/collector", title: "Capture", detail: "Record a collection", icon: Wallet },
+        ]
+      : [
+          { href: "/dashboard/loans", title: "Loans", detail: "Open your loan list", icon: Wallet },
+          { href: "/dashboard/notifications", title: "Alerts", detail: "Open reminders and notices", icon: Users },
+        ];
 
   return (
-    <div className="space-y-4 pb-4">
-      <section className="mobile-panel px-5 py-5">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <p className="text-[11px] uppercase tracking-[0.18em] text-stone-500">Portfolio view</p>
-            <h2 className="mt-1 text-xl font-semibold text-[#14213d]">
-              {activeRole === "creditor" ? "People and performance" : activeRole === "debtor" ? "Your loans" : "Assigned debtors"}
-            </h2>
-            <p className="mt-2 text-sm leading-relaxed text-stone-600">
-              {activeRole === "creditor"
-                ? "Scan approvals, routes, and field teams from a smaller but decision-focused mobile view."
-                : activeRole === "debtor"
-                  ? "See each loan, who manages it, what is left to repay, and when the next visit is expected."
-                  : "See who needs attention next, who is recovering well, and which debtor records need follow-up."}
-            </p>
-            {activeRole === "debtor" ? (
-              <p className="mt-3 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">
-                Tap a loan to open the full repayment breakdown and history
-              </p>
-            ) : activeRole === "collector" ? (
-              <div className="mt-4">
-                <Link href="/dashboard/portfolio/new" className="inline-flex items-center gap-2 rounded-full bg-[#14213d] px-4 py-3 text-sm font-semibold text-white">
-                  Request new debtor
-                  <ChevronRight size={16} />
-                </Link>
-              </div>
-            ) : null}
-          </div>
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#14213d] text-white">
-            <Users size={22} />
-          </div>
-        </div>
-
-        <div className="mt-4 flex items-center gap-3 rounded-[24px] border border-stone-900/8 bg-white/70 px-4 py-3">
-          <Search size={18} className="text-stone-400" />
-          <span className="text-sm text-stone-400">
-            {activeRole === "debtor" ? "Search lender, collector, or loan" : "Search debtor, route, or collector"}
-          </span>
-        </div>
-      </section>
-
-      <section className="space-y-3">
-        {items.map((card) => {
-          const content = (
-            <div className="mobile-panel-strong px-5 py-5">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <h3 className="text-lg font-semibold text-[#14213d]">{card.title}</h3>
-                <p className="mt-1 text-sm text-stone-600">{card.subtitle}</p>
-              </div>
-              <div className="flex items-center gap-2">
-                <StatusPill label={card.meta} tone={card.tone} />
-                {activeRole === "debtor" ? <ChevronRight size={16} className="text-stone-400" /> : null}
-              </div>
-            </div>
-            <div className="mt-4 rounded-[24px] bg-stone-900/[0.045] px-4 py-4">
-              <p className="text-[11px] uppercase tracking-[0.16em] text-stone-500">
-                {activeRole === "debtor" ? "Still left to repay" : "Snapshot"}
-              </p>
-              <div className="mt-2 flex items-end justify-between gap-3">
-                <p className="text-xl font-semibold text-[#14213d]">{card.displayValue}</p>
-                <div className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-700">
-                  <Sparkle size={14} />
-                  Live context
+    <div className="space-y-3 pb-4">
+      <section className="mobile-panel px-4 py-4">
+        <div className="mobile-compact-list">
+          {items.map((item) => {
+            const Icon = item.icon;
+            return (
+              <Link key={item.href} href={item.href} className="mobile-row">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-[12px] bg-slate-100 text-slate-700">
+                    <Icon size={18} />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-[#0f172a]">{item.title}</p>
+                    <p className="mt-1 text-[13px] text-slate-600">{item.detail}</p>
+                  </div>
                 </div>
-              </div>
-            </div>
-          </div>
-          );
-
-          const href = activeRole === "debtor"
-            ? `/dashboard/portfolio/${card.id}`
-            : activeRole === "collector"
-              ? `/dashboard/portfolio/debtors/${card.id}`
-              : null;
-
-          return href ? (
-            <Link key={card.id} href={href} className="block">
-              {content}
-            </Link>
-          ) : (
-            <div key={card.id}>{content}</div>
-          );
-        })}
+                <ChevronRight size={16} className="shrink-0 text-slate-400" />
+              </Link>
+            );
+          })}
+        </div>
       </section>
     </div>
   );
