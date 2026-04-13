@@ -4,8 +4,8 @@
   "description": "A premium mobile-first microloan workspace for collectors, creditors, and debtors powered by the Daily+ backend.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#f4efe6",
-  "theme_color": "#f4efe6",
+  "background_color": "#081120",
+  "theme_color": "#081120",
   "orientation": "portrait-primary",
   "icons": [
     {

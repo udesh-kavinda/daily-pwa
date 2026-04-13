@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { useEffect } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { Bell, Grid2x2, WalletCards, Radar, FolderKanban, UserRound, Route, HandCoins, Users } from "lucide-react";
 import { useUserStore } from "@/store/user-store";
 import type { MobileRole } from "@/lib/mobile-demo-data";
@@ -33,9 +34,18 @@ const navByRole: Record<MobileRole, Array<{ href: string; label: string; icon: R
 
 export function BottomNav() {
   const pathname = usePathname();
+  const router = useRouter();
   const { role } = useUserStore();
   const activeRole: MobileRole = normalizeMobileRole(role);
   const items = navByRole[activeRole];
+
+  useEffect(() => {
+    items.forEach((item) => {
+      if (item.href !== pathname) {
+        router.prefetch(item.href);
+      }
+    });
+  }, [items, pathname, router]);
 
   return (
     <nav className="fixed inset-x-0 bottom-0 z-40 px-3 pb-[calc(env(safe-area-inset-bottom)+0.45rem)] pt-2">
@@ -49,6 +59,7 @@ export function BottomNav() {
               <Link
                 key={item.href}
                 href={item.href}
+                prefetch
                 className={`mobile-tabbar-item text-[10px] font-semibold ${active ? "mobile-tabbar-item-active" : ""}`}
               >
                 <Icon size={17} className={active ? "text-emerald-700 dark:text-emerald-300" : ""} />

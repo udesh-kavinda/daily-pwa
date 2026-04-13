@@ -70,24 +70,51 @@
 }
 
 html {
+  min-height: 100%;
   background: var(--background);
 }
 
 body {
   min-height: 100vh;
+  min-height: 100dvh;
+  background-color: var(--background);
   background:
     radial-gradient(circle at top left, rgba(15, 159, 120, 0.08), transparent 28%),
     linear-gradient(180deg, #f8fbff 0%, #f4f7fb 42%, #eef3f9 100%);
   color: var(--foreground);
   font-family: var(--font-sans), sans-serif;
+  overscroll-behavior-y: none;
 }
 
 .dark body {
+  background-color: #081120;
   background:
     radial-gradient(circle at top left, rgba(29, 179, 138, 0.08), transparent 28%),
     linear-gradient(180deg, #0b1424 0%, #09111f 42%, #07101d 100%);
   color: var(--foreground);
   color-scheme: dark;
+}
+
+body::before,
+body::after {
+  content: "";
+  position: fixed;
+  left: 0;
+  right: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+body::before {
+  top: 0;
+  height: env(safe-area-inset-top);
+  background: var(--background);
+}
+
+body::after {
+  bottom: 0;
+  height: env(safe-area-inset-bottom);
+  background: var(--background);
 }
 
 button,
