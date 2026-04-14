@@ -88,6 +88,37 @@ async function resolveCollectorDebtor(params: {
   return { debtor, debtorError };
 }
 
+async function resolveDebtorForKycAccess(params: {
+  supabase: ReturnType<typeof createAdminClient>;
+  debtorId: string;
+  creditorId: string;
+  role: string;
+  collectorId?: string | null;
+}) {
+  const { supabase, debtorId, creditorId, role, collectorId } = params;
+
+  if (role === "collector" && collectorId) {
+    return resolveCollectorDebtor({
+      supabase,
+      debtorId,
+      creditorId,
+      collectorId,
+    });
+  }
+
+  const result = await supabase
+    .from("debtors")
+    .select("id, first_name, last_name, approval_status, is_verified, id_photo_front_url, debtor_photo_url, signature_url")
+    .eq("id", debtorId)
+    .eq("creditor_id", creditorId)
+    .maybeSingle();
+
+  return {
+    debtor: result.data as DebtorKycRow | null,
+    debtorError: result.error as QueryError,
+  };
+}
+
 function debtorName(debtor: DebtorKycRow) {
   return `${debtor.first_name || ""} ${debtor.last_name || ""}`.trim() || "Debtor";
 }
@@ -120,17 +151,18 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     }
 
     const session = await getAppSessionContextByClerkId(userId);
-    if (session.role !== "collector" || !session.collector) {
-      return NextResponse.json({ error: "Collector access is required" }, { status: 403 });
+    if (session.role !== "collector" && session.role !== "creditor") {
+      return NextResponse.json({ error: "Creditor or collector access is required" }, { status: 403 });
     }
 
     const { id } = await params;
     const supabase = createAdminClient();
-    const { debtor, debtorError } = await resolveCollectorDebtor({
+    const { debtor, debtorError } = await resolveDebtorForKycAccess({
       supabase,
       debtorId: id,
       creditorId: session.creditorId,
-      collectorId: session.collector.id,
+      role: session.role,
+      collectorId: session.collector?.id || null,
     });
 
     if (debtorError || !debtor) {
@@ -217,6 +249,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       debtor: {
         id: debtor.id,
         name: debtorName(debtor),
+        detailHref: `/dashboard/debtors/${debtor.id}`,
       },
       kyc: {
         idFrontUrl: String(updates.id_photo_front_url || debtor.id_photo_front_url || ""),

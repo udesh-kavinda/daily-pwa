@@ -19,6 +19,7 @@ type UploadResponse = {
   debtor: {
     id: string;
     name: string;
+    detailHref: string;
   };
   kyc: {
     idFrontUrl: string;
@@ -118,6 +119,7 @@ export function DebtorKycPageClient({ initialPayload }: { initialPayload: Mobile
         debtor: {
           id: next.debtor.id,
           name: next.debtor.name,
+          detailHref: next.debtor.detailHref || debtor.detailHref,
           approvalStatus: debtor.approvalStatus,
           kyc: next.kyc,
         },
@@ -147,14 +149,14 @@ export function DebtorKycPageClient({ initialPayload }: { initialPayload: Mobile
       <input ref={signatureInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => onFileSelected("signature", e.target.files?.[0] || null)} />
 
       <section className="mobile-panel px-4 py-4">
-        <Link href={`/dashboard/portfolio/debtors/${debtor.id}`} className="mobile-text-secondary inline-flex items-center gap-2 text-sm font-semibold">
+        <Link href={debtor.detailHref} className="mobile-text-secondary inline-flex items-center gap-2 text-sm font-semibold">
           <ArrowLeft size={16} />
           Back to debtor detail
         </Link>
 
         <div className="mt-4 flex items-start justify-between gap-4">
           <div className="min-w-0">
-            <p className="mobile-section-label">Collector field verification</p>
+            <p className="mobile-section-label">KYC management</p>
             <h2 className="mobile-text-primary mt-1 text-[1.3rem] font-semibold">{debtor.name}</h2>
             <p className="mobile-text-secondary mt-1.5 text-sm">Debtor approval: {statusLabel(debtor.approvalStatus)}</p>
           </div>
@@ -272,7 +274,7 @@ export function DebtorKycPageClient({ initialPayload }: { initialPayload: Mobile
             </button>
             <button
               type="button"
-              onClick={() => router.push(`/dashboard/portfolio/debtors/${debtor.id}`)}
+              onClick={() => router.push(debtor.detailHref)}
               className="mobile-inline-action-secondary"
             >
               Done

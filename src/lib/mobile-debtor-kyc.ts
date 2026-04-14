@@ -19,6 +19,7 @@ export type MobileDebtorKycPayload = {
     id: string;
     name: string;
     approvalStatus: string;
+    detailHref: string;
     kyc: {
       idFrontUrl: string | null;
       photoUrl: string | null;
@@ -60,24 +61,28 @@ export async function loadMobileDebtorKycByClerkId(
   debtorId: string,
 ): Promise<MobileDebtorKycPayload> {
   const session = await getAppSessionContextByClerkId(userId);
-  if (session.role !== "collector" || !session.collector) {
-    throw new MobileDebtorKycError("Collector access is required", 403);
+  if (session.role !== "collector" && session.role !== "creditor") {
+    throw new MobileDebtorKycError("Creditor or collector access is required", 403);
   }
 
   const supabase = createAdminClient();
-
-  const primaryResult = await supabase
+  const baseQuery = supabase
     .from("debtors")
     .select("id, first_name, last_name, approval_status, is_verified, id_photo_front_url, debtor_photo_url, signature_url")
     .eq("id", debtorId)
-    .eq("creditor_id", session.creditorId)
-    .or(buildCollectorDebtorAccessFilter(session.collector.id))
-    .maybeSingle();
+    .eq("creditor_id", session.creditorId);
+
+  const primaryResult =
+    session.role === "collector" && session.collector
+      ? await baseQuery.or(buildCollectorDebtorAccessFilter(session.collector.id)).maybeSingle()
+      : await baseQuery.maybeSingle();
 
   let debtor = primaryResult.data as DebtorKycRow | null;
   let debtorError = primaryResult.error as QueryError;
 
   if (
+    session.role === "collector" &&
+    session.collector &&
     debtorError &&
     (debtorError.message.includes("requested_by_collector_id") ||
       isMissingDebtorColumnError(debtorError.message, "approval_status"))
@@ -108,6 +113,7 @@ export async function loadMobileDebtorKycByClerkId(
       id: debtor.id,
       name: debtorName(debtor),
       approvalStatus: debtor.approval_status || "approved",
+      detailHref: `/dashboard/debtors/${debtor.id}`,
       kyc: {
         idFrontUrl: debtor.id_photo_front_url || null,
         photoUrl: debtor.debtor_photo_url || null,

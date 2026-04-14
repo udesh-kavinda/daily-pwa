@@ -111,7 +111,7 @@ export default async function LoanDetailPage({
               </p>
             </div>
             <Link
-              href={`/dashboard/portfolio/${loan.id}/history`}
+              href={`/dashboard/loans/${loan.id}/history`}
               className="mobile-inline-action-secondary"
             >
               History
@@ -139,7 +139,7 @@ export default async function LoanDetailPage({
               <h3 className="mobile-text-primary mt-1 text-[1rem] font-semibold">Collection history</h3>
             </div>
             <Link
-              href={`/dashboard/portfolio/${loan.id}/history`}
+              href={`/dashboard/loans/${loan.id}/history`}
               className="inline-flex items-center gap-2 text-sm font-semibold text-emerald-700 dark:text-emerald-300"
             >
               Full history

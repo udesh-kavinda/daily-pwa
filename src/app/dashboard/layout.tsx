@@ -48,6 +48,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         subtitle: "Coverage, assigned collector, and debtors mapped to this route",
       };
     }
+    if (pathname.startsWith("/dashboard/loans/") && pathname.endsWith("/history")) {
+      return {
+        title: "Loan history",
+        subtitle: "A clear timeline of each collection, missed visit, and recorded repayment on this loan",
+      };
+    }
     if (pathname.startsWith("/dashboard/loans/")) {
       return {
         title: "Loan detail",
@@ -55,6 +61,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       };
     }
     if (pathname.startsWith("/dashboard/debtors/")) {
+      if (pathname.endsWith("/kyc")) {
+        return {
+          title: "KYC capture",
+          subtitle: "Update debtor identity proof and field verification without leaving the mobile workflow",
+        };
+      }
       return {
         title: "Debtor detail",
         subtitle: "Borrower profile, KYC state, and loan exposure in one place",

@@ -199,7 +199,7 @@ export default async function CollectorDebtorDetailPage({
 
           <div className="mt-4 flex flex-wrap gap-2.5">
             <Link
-              href={`/dashboard/portfolio/debtors/${debtor.id}/kyc`}
+              href={`/dashboard/debtors/${debtor.id}/kyc`}
               className="mobile-inline-action"
             >
               <ShieldAlert size={16} />
